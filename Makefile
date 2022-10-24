@@ -1,5 +1,5 @@
 BUILD_DIR=build
-CC=gcc -g
+CC=gcc -g -Isrc
 
 $(BUILD_DIR)/a.out: src/main.c $(BUILD_DIR)
 	$(CC) $< -o $@
