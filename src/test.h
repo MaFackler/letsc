@@ -114,7 +114,7 @@ void test__print_code(const char *filename, size_t line) {
 
 void test__run(const char *filename) {
     test__set_color(TEST__COLOR_TITLE);
-    printf("# Run tests of file %s\n", __FILE__);
+    printf("# Run tests of file %s\n", filename);
     
     for (size_t i = 0; i < g_num_testcases; ++i) {
         TestCase *tc = &g_testcases[i];
@@ -129,6 +129,7 @@ void test__run(const char *filename) {
     printf("========");
     printf("    %s    ", text);
     printf("========\n\n");
+    test__set_color(TEST__COLOR_DEFAULT);
 }
 
 #endif // TEST_H
