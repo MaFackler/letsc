@@ -7,6 +7,8 @@
 #include <platform.h>
 
 
+
+
 int main() {
     Platform *p = platform_create();
     int window = platform_window_open(p, 0, 0, 800, 600);
@@ -14,11 +16,12 @@ int main() {
     bool quit = false;
     XEvent e;
     while (!quit) {
-        XNextEvent(p->display, &e);
+        platform_begin(p);
 
-        if (e.type == KeyPress) {
+        if (platform_key_released(p, 'q')) {
             quit = true;
         }
+        platform_end(p);
     }
 
     platform_window_close(p, window);
