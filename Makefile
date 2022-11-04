@@ -1,5 +1,5 @@
 BUILD_DIR=build
-CC=gcc -g -Isrc -lX11
+CC=gcc -g -Isrc -lX11 -lXext
 HEADERS=$(wildcard src/*.h)
 TESTS=$(wildcard tests/test_*.c)
 TESTS_BIN=$(subst tests/, $(BUILD_DIR)/, $(basename $(TESTS)))
