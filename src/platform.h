@@ -12,19 +12,19 @@ typedef struct {
 } KeyState;
 
 typedef struct {
-	Display *display;
-	Window root;
-	int screen;
+    Display *display;
+    Window root;
+    int screen;
     KeyState input[PLATFORM_NUM_KEYS];
 } Platform;
 
 Platform* platform_create() {
-	Platform *p = malloc(sizeof(Platform));
+    Platform *p = malloc(sizeof(Platform));
     p->display = XOpenDisplay(NULL);
     assert(p->display);
     p->screen = XDefaultScreen(p->display);
     p->root = XRootWindow(p->display, p->screen);
-	return p;
+    return p;
 }
 
 void platform_destroy(Platform *p) {
@@ -44,7 +44,7 @@ int platform_window_open(Platform *p, int x, int y, int w, int h) {
                  ExposureMask | KeyPressMask | KeyReleaseMask);
 
     XMapWindow(p->display, window);
-	return window;
+    return window;
 }
 
 void platform_window_close(Platform *p, int window) {
