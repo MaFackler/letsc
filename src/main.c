@@ -6,8 +6,9 @@
 #include <vector.h>
 #include <platform.h>
 #include <shared.h>
+#include <framebuffer.h>
 
-typedef void (*update_func)(PlatformWindow *window);
+typedef void (*update_func)(Framebuffer *framebuffer);
 
 int main() {
 	SharedLib lib;
@@ -18,6 +19,8 @@ int main() {
 
     Platform *p = platform_create();
     PlatformWindow window = platform_window_open(p, 0, 0, 800, 600);
+
+    Framebuffer *framebuffer = framebuffer_create_external(window.pixels, window.width, window.height);
 
     bool quit = false;
     XEvent e;
@@ -33,7 +36,7 @@ int main() {
 		}
 
         // Render
-		update(&window);
+		update(framebuffer);
         platform_window_render(p, &window);
         platform_end(p);
     }

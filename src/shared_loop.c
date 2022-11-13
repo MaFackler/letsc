@@ -1,10 +1,12 @@
 #include <stdio.h>
-#include <platform.h>
+#include <framebuffer.h>
 
-void update(PlatformWindow *window) {
-    for (int y = 0; y < window->height; ++y) {
-        for (int x = 0; x < window->width; ++x) {
-            window->pixels[y * window->width + x] = 0xFF00FFFF;
-        }
-    }
+void update(Framebuffer *framebuffer) {
+    framebuffer->color = 0xFFFFFFFF;
+    framebuffer_fill_rect(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
+    framebuffer->color = 0xFFFF0000;
+    framebuffer_fill_rect(framebuffer, 0, 0, 100, 100);
+
+    framebuffer_fill_circle(framebuffer, 200, 200, 50);
+    framebuffer_fill_triangle(framebuffer, 400, 400, 500, 400, 500, 500);
 }
