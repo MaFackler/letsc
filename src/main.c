@@ -5,11 +5,17 @@
 #include <test.h>
 #include <vector.h>
 #include <platform.h>
+#include <shared.h>
 
-
-
+typedef void (*update_func)(PlatformWindow *window);
 
 int main() {
+	SharedLib lib;
+	shared_lib_open(&lib, "build/shared_loop.so");
+
+	update_func update = shared_lib_get_function(&lib, "update");
+
+
     Platform *p = platform_create();
     PlatformWindow window = platform_window_open(p, 0, 0, 800, 600);
 
@@ -22,17 +28,17 @@ int main() {
             quit = true;
         }
 
+		if (shared_lib_check_and_reload(&lib)) {
+			update = shared_lib_get_function(&lib, "update");
+		}
+
         // Render
-        for (int y = 0; y < window.height; ++y) {
-            for (int x = 0; x < window.width; ++x) {
-                window.pixels[y * window.width + x] = 0xFFFF0000;
-            }
-        }
+		update(&window);
         platform_window_render(p, &window);
         platform_end(p);
     }
 
     platform_window_close(p, &window);
     platform_destroy(p);
-
+	shared_lib_close(&lib);
 }

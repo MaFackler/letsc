@@ -1,6 +1,10 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+
+#include <assert.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XShm.h>
