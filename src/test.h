@@ -43,6 +43,10 @@ bool test__checki(int a, int b) {
     return a == b;
 }
 
+bool test__checkui(unsigned int a, unsigned int b) {
+    return a == b;
+}
+
 bool test__checks(const char *a, const char *b) {
     return strcmp(a, b) == 0;
 }
@@ -53,11 +57,16 @@ bool test__checkf(float a, float b) {
 
 #define test__check(a, b) _Generic((a, b), \
     int: test__checki, \
+    unsigned int: test__checkui, \
     char*: test__checks, \
     float: test__checkf)(a, b)
 
 void test__print_statementi(bool success, int a, int b) {
     printf("%d %s %d\n", a, SUCCESS_TO_SYMBOL(success), b);
+}
+
+void test__print_statementui(bool success, unsigned int a, unsigned int b) {
+    printf("%x %s %x\n", a, SUCCESS_TO_SYMBOL(success), b);
 }
 
 void test__print_statements(bool success, const char *a, const char *b) {
@@ -70,6 +79,7 @@ void test__print_statementf(bool success, float a, float b) {
 
 #define test__print_statement(s, a, b) _Generic((s, a, b), \
     int: test__print_statementi, \
+    unsigned int: test__print_statementui, \
     char*: test__print_statements, \
     float: test__print_statementf)(s, a, b)
 
