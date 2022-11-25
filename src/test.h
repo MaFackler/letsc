@@ -1,5 +1,9 @@
 #ifndef TEST_H
 #define TEST_H
+#include <stdio.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <string.h>
 
 #ifndef MAX_TESTCASES
 #define MAX_TESTCASES 1024
