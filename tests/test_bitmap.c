@@ -28,20 +28,20 @@ TEST(bitmap_pixels_not_aligned) {
     Bitmap *b = bitmap_create_from_file("data/test.bmp");
 
     // NOTE: pixels are bottom up
-    CHECK(b->pixels[0], 0xFFFF0000); // red
-    CHECK(b->pixels[1], 0xFFFFFFFF); // white
-    CHECK(b->pixels[2], 0xFF0000FF); // blue
-    CHECK(b->pixels[3], 0xFF00FF00); // green
+    CHECK(b->pixels[0], 0xFF0000FF); // blue
+    CHECK(b->pixels[1], 0xFF00FF00); // green
+    CHECK(b->pixels[2], 0xFFFF0000); // red
+    CHECK(b->pixels[3], 0xFFFFFFFF); // white
 }
 
 TEST(bitmap_pixels_aligned) {
     Bitmap *b = bitmap_create_from_file("data/test64.bmp");
 
     // NOTE: pixels are bottom up
-    CHECK(b->pixels[0], 0xFFFF0000); // red
-    CHECK(b->pixels[32], 0xFFFFFFFF); // white
-    CHECK(b->pixels[32 * b->width], 0xFF0000FF); // blue
-    CHECK(b->pixels[32 * b->width + 32], 0xFF00FF00); // green
+    CHECK(b->pixels[0], 0xFF0000FF); // blue
+    CHECK(b->pixels[32], 0xFF00FF00); // green
+    CHECK(b->pixels[32 * b->width], 0xFFFF0000); // red
+    CHECK(b->pixels[32 * b->width + 32], 0xFFFFFFFF); // white
 }
 
 int main() {

@@ -55,6 +55,18 @@ void framebuffer_fill_rect(Framebuffer *framebuffer, int x, int y, int w, int h)
     }
 }
 
+void framebuffer_fill_bitmap(Framebuffer *framebuffer, uint32_t *pixels, int x, int y, int w, int h) {
+    ClipRect rect = {x, y, x + w, y + h};
+    cliprect_clip(&rect, 0, 0, framebuffer->width, framebuffer->height);
+    for (int y = rect.ymin; y < rect.ymax; ++y) {
+        for (int x = rect.xmin; x < rect.xmax; ++x) {
+            if (framebuffer->stencil[y * framebuffer->width + x] > 0) {
+                framebuffer->pixels[y * framebuffer->width + x] = pixels[(y - rect.ymin) * w + x - rect.xmin];
+            }
+        }
+    }
+}
+
 void framebuffer_fill_rect_stencil(Framebuffer *framebuffer, int x, int y, int w, int h) {
     ClipRect rect = {x, y, x + w, y + h};
     cliprect_clip(&rect, 0, 0, framebuffer->width, framebuffer->height);

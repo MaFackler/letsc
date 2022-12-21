@@ -7,10 +7,12 @@
 #include <platform.h>
 #include <shared.h>
 #include <framebuffer.h>
+#include <bitmap.h>
 
-typedef void (*update_func)(Framebuffer *framebuffer);
+typedef void (*update_func)(Framebuffer *framebuffer, Bitmap *bitmap);
 
 int main() {
+    Bitmap *bitmap = bitmap_create_from_file("data/test64.bmp");
 	SharedLib lib;
 	shared_lib_open(&lib, "build/shared_loop.so");
 
@@ -36,7 +38,7 @@ int main() {
 		}
 
         // Render
-		update(framebuffer);
+		update(framebuffer, bitmap);
         platform_window_render(p, &window);
         platform_end(p);
     }

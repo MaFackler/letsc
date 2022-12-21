@@ -66,18 +66,16 @@ Bitmap* bitmap_create_from_file(const char *filename) {
 
     uint32_t *dest = res->pixels;
 
+    int stride = res->width * 3 + res->width % 4;
     for (int y = 0; y < res->height; ++y) {
+        char *src_row = src + (res->height - y - 1) * stride;
         for (int x = 0; x < res->width; ++x) {
-            uint8_t b = *src++;
-            uint8_t g = *src++;
-            uint8_t r = *src++;
+            uint8_t b = *src_row++;
+            uint8_t g = *src_row++;
+            uint8_t r = *src_row++;
             uint32_t value = (0xFF << 24) | (r << 16) | (g << 8) | (b << 0);
             *dest++ = value; 
         }
-
-        // NOTE: byte alignment
-        int align = res->width % 4;
-        src += align;
     }
     free(mem);
     return res;

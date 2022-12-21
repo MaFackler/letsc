@@ -1,14 +1,20 @@
 #include <stdio.h>
 #include <framebuffer.h>
+#include <bitmap.h>
 
 typedef struct {
     int x;
     int y;
 } v2;
 
-void update(Framebuffer *framebuffer) {
+
+void update(Framebuffer *framebuffer, Bitmap *bitmap) {
     framebuffer->color = 0xFF000000;
     framebuffer_fill_rect(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
+
+    framebuffer_fill_bitmap(framebuffer, bitmap->pixels, 500, 100, bitmap->width, bitmap->height);
+
+#if 1 // C-Logo
     framebuffer->stencil_value = 0xFF;
     framebuffer_fill_rect_stencil(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
 
@@ -41,6 +47,7 @@ void update(Framebuffer *framebuffer) {
     framebuffer_fill_rect_stencil(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
     framebuffer_fill_triangle(framebuffer, c.x, c.y, d.x, d.y, g.x, g.y);
 
+#endif
 
 
 
