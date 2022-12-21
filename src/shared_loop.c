@@ -8,13 +8,36 @@ typedef struct {
 } v2;
 
 
+void render_char(Framebuffer *framebuffer, Bitmap *bitmap, int *x, int y, char c) {
+    int xindex = (c - ' ') % 18;
+    int yindex = (c - ' ') / 18;
+    const int cw = 7;
+    const int ch = 9;
+    framebuffer_fill_bitmap_ex(framebuffer, bitmap->pixels, bitmap->width,
+                               xindex * cw, yindex * ch, *x, y, cw, ch);
+    *x += cw;
+}
+
+void render_text(Framebuffer *framebuffer, Bitmap *bitmap, int x, int y, char *text) {
+    char c = 0;
+    while (c = *text++) {
+        render_char(framebuffer, bitmap, &x, y, c);
+    }
+}
+ 
+
 void update(Framebuffer *framebuffer, Bitmap *bitmap) {
     framebuffer->color = 0xFF000000;
     framebuffer_fill_rect(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
 
-    framebuffer_fill_bitmap(framebuffer, bitmap->pixels, 500, 100, bitmap->width, bitmap->height);
+    //render_char(framebuffer, bitmap, 10, 10, '2');
+    render_text(framebuffer, bitmap, 10, 10, "# MF Code");
+    render_text(framebuffer, bitmap, 10, 20, "---------");
+    render_text(framebuffer, bitmap, 30, 30, "this is some test text");
+    render_text(framebuffer, bitmap, 30, 40, "THIS IS SOME TEST TEXT");
+    //framebuffer_fill_bitmap(framebuffer, bitmap->pixels, 0, 0, bitmap->width, bitmap->height);
 
-#if 1 // C-Logo
+#if 0 // C-Logo
     framebuffer->stencil_value = 0xFF;
     framebuffer_fill_rect_stencil(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
 

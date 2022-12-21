@@ -12,7 +12,7 @@
 typedef void (*update_func)(Framebuffer *framebuffer, Bitmap *bitmap);
 
 int main() {
-    Bitmap *bitmap = bitmap_create_from_file("data/test64.bmp");
+    Bitmap *bitmap = bitmap_create_from_file("data/font.bmp");
 	SharedLib lib;
 	shared_lib_open(&lib, "build/shared_loop.so");
 
