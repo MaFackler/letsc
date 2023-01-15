@@ -12,6 +12,10 @@ make
 # or
 make main
 
+# Build src/shared_*.c
+# (build/a.out will call the shared lib) 
+make shared
+
 # Build and execute all tests
 # Tests are store under tests/test_*.c
 # Output is build/test_*
