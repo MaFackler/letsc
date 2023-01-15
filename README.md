@@ -26,5 +26,5 @@ the tests directory. `make test` will detect it automatically
 The data/font.bmp is not part of the git repo.
 It has to be downloaded manually:
 
-[](https://opengameart.org/content/ascii-bitmap-font-cellphone)
+[OpenGameArt](https://opengameart.org/content/ascii-bitmap-font-cellphone)
 
