@@ -24,6 +24,9 @@ typedef struct {
     int depth;
     int screen;
     KeyState input[PLATFORM_NUM_KEYS];
+    bool mouse_left_down;
+    int mouse_x;
+    int mouse_y;
 } Platform;
 
 typedef struct {
@@ -63,7 +66,7 @@ PlatformWindow platform_window_open(Platform *p, int x, int y, int w, int h) {
                                      WhitePixel(p->display, p->screen));
 
     XSelectInput(p->display, res.window,
-                 ExposureMask | KeyPressMask | KeyReleaseMask);
+                 ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
 
     XMapWindow(p->display, res.window);
     res.image = XShmCreateImage(p->display,
@@ -99,6 +102,14 @@ void platform_begin(Platform *p) {
             platform_dispatch_key(p, &e.xkey, true);
         } else if (e.type == KeyRelease) {
             platform_dispatch_key(p, &e.xkey, false);
+        } else if (e.type == ButtonPress) {
+            p->mouse_left_down = true;
+            p->mouse_x = e.xbutton.x;
+            p->mouse_y = e.xbutton.y;
+        } else if (e.type == ButtonRelease) {
+            p->mouse_left_down = false;
+            p->mouse_x = e.xbutton.x;
+            p->mouse_y = e.xbutton.y;
         }
     }
 }

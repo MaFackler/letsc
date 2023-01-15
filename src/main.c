@@ -9,7 +9,7 @@
 #include <framebuffer.h>
 #include <bitmap.h>
 
-typedef void (*update_func)(Framebuffer *framebuffer, Bitmap *bitmap);
+typedef void (*update_func)(Platform *p, Framebuffer *framebuffer, Bitmap *bitmap);
 
 int main() {
     Bitmap *bitmap = bitmap_create_from_file("data/font.bmp");
@@ -38,7 +38,7 @@ int main() {
 		}
 
         // Render
-		update(framebuffer, bitmap);
+		update(p, framebuffer, bitmap);
         platform_window_render(p, &window);
         platform_end(p);
     }

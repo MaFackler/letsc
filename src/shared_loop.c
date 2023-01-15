@@ -1,11 +1,18 @@
 #include <stdio.h>
 #include <framebuffer.h>
 #include <bitmap.h>
+#include <platform.h>
 
 typedef struct {
     int x;
     int y;
 } v2;
+
+v2 get_text_dim(char *text) {
+    const int cw = 7;
+    const int ch = 9;
+    return (v2) {cw * strlen(text), ch};
+}
 
 
 void render_char(Framebuffer *framebuffer, Bitmap *bitmap, int *x, int y, char c) {
@@ -24,17 +31,31 @@ void render_text(Framebuffer *framebuffer, Bitmap *bitmap, int x, int y, char *t
         render_char(framebuffer, bitmap, &x, y, c);
     }
 }
+
+
+void render_button(Framebuffer *framebuffer, Bitmap *font, int x, int y, char *text, unsigned int color) {
+    framebuffer->color = color;
+    v2 dim = get_text_dim(text);
+    int margin = 2;
+    dim.x += 2 * margin;
+    dim.y += 2 * margin;
+    v2 pos = {30, 30};
+    framebuffer_fill_rect(framebuffer, pos.x, pos.y, dim.x, dim.y);
+    render_text(framebuffer, font, pos.x + margin, pos.y + margin, text);
+}
+
  
 
-void update(Framebuffer *framebuffer, Bitmap *bitmap) {
+void update(Platform *p, Framebuffer *framebuffer, Bitmap *bitmap) {
     framebuffer->color = 0xFF000000;
     framebuffer_fill_rect(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
 
     //render_char(framebuffer, bitmap, 10, 10, '2');
     render_text(framebuffer, bitmap, 10, 10, "# MF Code");
     render_text(framebuffer, bitmap, 10, 20, "---------");
-    render_text(framebuffer, bitmap, 30, 30, "this is some test text");
-    render_text(framebuffer, bitmap, 30, 40, "THIS IS SOME TEST TEXT");
+
+    //if (p->mouse_left_down) {
+    render_button(framebuffer, bitmap, 30, 30, "Hello World", 0xFFFF0000);
     //framebuffer_fill_bitmap(framebuffer, bitmap->pixels, 0, 0, bitmap->width, bitmap->height);
 
 #if 0 // C-Logo

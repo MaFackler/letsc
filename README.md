@@ -21,3 +21,10 @@ make test
 ## Create a new test
 To create a new test just create a file with test_ prefix in
 the tests directory. `make test` will detect it automatically
+
+## NOTE
+The data/font.bmp is not part of the git repo.
+It has to be downloaded manually:
+
+[](https://opengameart.org/content/ascii-bitmap-font-cellphone)
+
