@@ -66,7 +66,7 @@ PlatformWindow platform_window_open(Platform *p, int x, int y, int w, int h) {
                                      WhitePixel(p->display, p->screen));
 
     XSelectInput(p->display, res.window,
-                 ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
+                 ExposureMask | KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
 
     XMapWindow(p->display, res.window);
     res.image = XShmCreateImage(p->display,
@@ -110,6 +110,11 @@ void platform_begin(Platform *p) {
             p->mouse_left_down = false;
             p->mouse_x = e.xbutton.x;
             p->mouse_y = e.xbutton.y;
+        }
+
+        if (MotionNotify) {
+            p->mouse_x = e.xmotion.x;
+            p->mouse_y = e.xmotion.y;
         }
     }
 }

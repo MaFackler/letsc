@@ -2,60 +2,28 @@
 #include <framebuffer.h>
 #include <bitmap.h>
 #include <platform.h>
+#include <gui.h>
 
-typedef struct {
-    int x;
-    int y;
-} v2;
-
-v2 get_text_dim(char *text) {
-    const int cw = 7;
-    const int ch = 9;
-    return (v2) {cw * strlen(text), ch};
-}
-
-
-void render_char(Framebuffer *framebuffer, Bitmap *bitmap, int *x, int y, char c) {
-    int xindex = (c - ' ') % 18;
-    int yindex = (c - ' ') / 18;
-    const int cw = 7;
-    const int ch = 9;
-    framebuffer_fill_bitmap_ex(framebuffer, bitmap->pixels, bitmap->width,
-                               xindex * cw, yindex * ch, *x, y, cw, ch);
-    *x += cw;
-}
-
-void render_text(Framebuffer *framebuffer, Bitmap *bitmap, int x, int y, char *text) {
-    char c = 0;
-    while (c = *text++) {
-        render_char(framebuffer, bitmap, &x, y, c);
-    }
-}
-
-
-void render_button(Framebuffer *framebuffer, Bitmap *font, int x, int y, char *text, unsigned int color) {
-    framebuffer->color = color;
-    v2 dim = get_text_dim(text);
-    int margin = 2;
-    dim.x += 2 * margin;
-    dim.y += 2 * margin;
-    v2 pos = {30, 30};
-    framebuffer_fill_rect(framebuffer, pos.x, pos.y, dim.x, dim.y);
-    render_text(framebuffer, font, pos.x + margin, pos.y + margin, text);
-}
-
- 
 
 void update(Platform *p, Framebuffer *framebuffer, Bitmap *bitmap) {
     framebuffer->color = 0xFF000000;
     framebuffer_fill_rect(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
 
+    Gui gui = {0};
+    gui_init(&gui, framebuffer, bitmap);
+    gui_set_mouse(&gui, p->mouse_x, p->mouse_y, p->mouse_left_down);
+    char buf[256] = {0};
+    sprintf(&buf[0], "Mouse x=%d, y=%d", p->mouse_x, p->mouse_y);
+
     //render_char(framebuffer, bitmap, 10, 10, '2');
-    render_text(framebuffer, bitmap, 10, 10, "# MF Code");
-    render_text(framebuffer, bitmap, 10, 20, "---------");
+    framebuffer_render_text(framebuffer, bitmap, 10, 10, "# MF Code");
+    framebuffer_render_text(framebuffer, bitmap, 10, 20, "---------");
+    framebuffer_render_text(framebuffer, bitmap, 10, 30, &buf[0]);
 
     //if (p->mouse_left_down) {
-    render_button(framebuffer, bitmap, 30, 30, "Hello World", 0xFFFF0000);
+    if (gui_render_button(&gui, 30, 40, "Hello World", 0xFFFF0000)) {
+        framebuffer_fill_rect(framebuffer, 200, 200, 100, 100);
+    }
     //framebuffer_fill_bitmap(framebuffer, bitmap->pixels, 0, 0, bitmap->width, bitmap->height);
 
 #if 0 // C-Logo

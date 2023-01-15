@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <bitmap.h>
 
 #define MIN(a, b) (a < b ? a : b)
 #define MAX(a, b) (a > b ? a : b)
@@ -170,6 +171,24 @@ void framebuffer_fill_triangle_stencil(Framebuffer *framebuffer, int ax, int ay,
         }
     }
 }
+
+void framebuffer_render_char(Framebuffer *framebuffer, Bitmap *bitmap, int *x, int y, char c) {
+    int xindex = (c - ' ') % 18;
+    int yindex = (c - ' ') / 18;
+    const int cw = 7;
+    const int ch = 9;
+    framebuffer_fill_bitmap_ex(framebuffer, bitmap->pixels, bitmap->width,
+                               xindex * cw, yindex * ch, *x, y, cw, ch);
+    *x += cw;
+}
+
+void framebuffer_render_text(Framebuffer *framebuffer, Bitmap *bitmap, int x, int y, char *text) {
+    char c = 0;
+    while (c = *text++) {
+        framebuffer_render_char(framebuffer, bitmap, &x, y, c);
+    }
+}
+
 
 
 #endif // FRAMEBUFFER_H
