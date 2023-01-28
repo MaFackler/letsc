@@ -3,26 +3,24 @@
 #include <bitmap.h>
 #include <platform.h>
 #include <gui.h>
+#include <shared_api.h>
 
 
-void update(Platform *p, Framebuffer *framebuffer, Bitmap *bitmap) {
-    framebuffer->color = 0xFF000000;
-    framebuffer_fill_rect(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
+void update(SharedApi *api) {
+    api->framebuffer->color = 0xFF000000;
+    framebuffer_fill_rect(api->framebuffer, 0, 0, api->framebuffer->width, api->framebuffer->height);
 
-    Gui gui = {0};
-    gui_init(&gui, framebuffer, bitmap);
-    gui_set_mouse(&gui, p->mouse_x, p->mouse_y, p->mouse_left_down);
     char buf[256] = {0};
-    sprintf(&buf[0], "Mouse x=%d, y=%d", p->mouse_x, p->mouse_y);
+    sprintf(&buf[0], "Mouse x=%d, y=%d", api->platform->mouse_x, api->platform->mouse_y);
 
     //render_char(framebuffer, bitmap, 10, 10, '2');
-    framebuffer_render_text(framebuffer, bitmap, 10, 10, "# MF Code");
-    framebuffer_render_text(framebuffer, bitmap, 10, 20, "---------");
-    framebuffer_render_text(framebuffer, bitmap, 10, 30, &buf[0]);
+    framebuffer_render_text(api->framebuffer, api->font, 10, 10, "# MF Code");
+    framebuffer_render_text(api->framebuffer, api->font, 10, 20, "---------");
+    framebuffer_render_text(api->framebuffer, api->font, 10, 30, &buf[0]);
 
     //if (p->mouse_left_down) {
-    if (gui_render_button(&gui, 30, 40, "Hello World", 0xFFFF0000)) {
-        framebuffer_fill_rect(framebuffer, 200, 200, 100, 100);
+    if (gui_render_button(api->gui, 30, 40, "Hello World", 0xFFFF0000)) {
+        framebuffer_fill_rect(api->framebuffer, 200, 200, 100, 100);
     }
     //framebuffer_fill_bitmap(framebuffer, bitmap->pixels, 0, 0, bitmap->width, bitmap->height);
 
