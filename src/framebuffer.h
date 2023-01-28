@@ -61,6 +61,7 @@ void framebuffer_clean(Framebuffer *framebuffer, uint32_t color) {
     framebuffer_fill_rect(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
 }
 
+
 void framebuffer_fill_bitmap_ex(Framebuffer *framebuffer, uint32_t *pixels, int stride, int sx, int sy, int dx, int dy, int w, int h) {
     ClipRect rect = {dx, dy, dx + w, dy + h};
     cliprect_clip(&rect, 0, 0, framebuffer->width, framebuffer->height);
@@ -87,6 +88,13 @@ void framebuffer_fill_rect_stencil(Framebuffer *framebuffer, int x, int y, int w
             framebuffer->stencil[y * framebuffer->width + x] = framebuffer->stencil_value;
         }
     }
+}
+
+void framebuffer_clean_stencil(Framebuffer *framebuffer) {
+    int value_old = framebuffer->stencil_value;
+    framebuffer->stencil_value = 0xFF;
+    framebuffer_fill_rect_stencil(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
+    framebuffer->stencil_value = value_old;
 }
 
 void framebuffer_fill_circle(Framebuffer *framebuffer, int x0, int y0, int r) {

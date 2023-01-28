@@ -20,8 +20,9 @@ char *string_create(char *fmt, ...) {
     va_start(args1, fmt);
     va_copy(args2, args1);
     size_t size = vsnprintf(NULL, 0, fmt, args1);
-    char *res = malloc(size);
+    char *res = malloc(size + 1);
     vsprintf(res, fmt, args2);
+    res[size] = 0;
     va_end(args1);
     va_end(args2);
     return res;
@@ -110,10 +111,20 @@ int main() {
         // Render
         // before update
         framebuffer_clean(framebuffer, 0xFF000000);
+        framebuffer_clean_stencil(framebuffer);
         gui_init(&gui, api.framebuffer, api.font);
         gui_set_mouse(&gui, api.platform->mouse_x, api.platform->mouse_y, api.platform->mouse_left_down);
         // actual update
         update(&api);
+        // after update
+        framebuffer_clean_stencil(framebuffer);
+        int y = 20;
+        for (int i = 0; i < vec_size(shared_libs); ++i) {
+            if (gui_render_button(&gui, 20, y, shared_libs[i], 0xFFFF0000)) {
+                used_index = i;
+            }
+            y += 20;
+        }
         platform_window_render(platform, &window);
         platform_end(platform);
     }
