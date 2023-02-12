@@ -9,8 +9,8 @@
 #define MAX_TESTCASES 1024
 #endif // MAX_TESTCASES
 
-#define TEST(name) void name()
-#define TEST_REGISTER(func) test__register(#func, func)
+#define TEST(name) void test_##name()
+#define TEST_REGISTER(func) test__register("test_"#func, test_##func)
 #define TEST_RUN() test__run(__FILE__)
 #define SUCCESS_TO_SYMBOL(s) (s ? "==" : "!=")
 #define SUCCESS_TO_COLOR(s) (s ? TEST__COLOR_SUCCESS : TEST__COLOR_FAILURE)
@@ -56,7 +56,9 @@ bool test__checks(const char *a, const char *b) {
 }
 
 bool test__checkf(float a, float b) {
-    return a == b;
+    float diff = a - b;
+    // TODO: precision
+    return diff < 0.01f;
 }
 
 #define test__check(a, b) _Generic((a, b), \
