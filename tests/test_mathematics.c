@@ -33,7 +33,12 @@ TEST(v3_direction) {
 TEST(v3_cross) {
     v3 a = {1.0f, 0.0f, 0.0f};
     v3 b = {0.0f, 1.0f, 0.0f};
-    v3 res = v3_cross(a, b);
+    v3 res = v3_cross(b, a);
+    CHECK(res.x, 0.0f);
+    CHECK(res.y, 0.0f);
+    CHECK(res.z, -1.0f);
+
+    res = v3_cross(a, b);
     CHECK(res.x, 0.0f);
     CHECK(res.y, 0.0f);
     CHECK(res.z, 1.0f);

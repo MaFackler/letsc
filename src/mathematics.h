@@ -48,9 +48,9 @@ v3 v3_direction(v3 from, v3 to) {
 
 v3 v3_cross(v3 a, v3 b) {
     v3 res = {0};
-    res.x = a.y * b.z + a.z * b.y;
-    res.y = a.z * b.x + a.x * b.z;
-    res.z = a.x * b.y + a.y * b.x;
+    res.x = a.y * b.z - a.z * b.y;
+    res.y = a.z * b.x - a.x * b.z;
+    res.z = a.x * b.y - a.y * b.x;
     return res;
 }
 
