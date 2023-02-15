@@ -20,6 +20,40 @@ typedef struct {
 
 #define M4_ELEMENT(m, x, y) m.e[y * 4 + x]
 
+v3 v3_sub(v3 a, v3 b) {
+    v3 res = {0};
+    res.x = a.x - b.x;
+    res.y = a.y - b.y;
+    return res;
+}
+
+float v3_length(v3 a) {
+    float res = a.x * a.x + a.y * a.y + a.z * a.z;
+    return sqrt(res);
+}
+
+v3 v3_normalize(v3 a) {
+    v3 res = {0};
+    float len = v3_length(a);
+    res.x = a.x / len;
+    res.y = a.y / len;
+    res.z = a.z / len;
+    return res;
+}
+
+v3 v3_direction(v3 from, v3 to) {
+    v3 res = v3_sub(to, from);
+    return v3_normalize(res);
+}
+
+v3 v3_cross(v3 a, v3 b) {
+    v3 res = {0};
+    res.x = a.y * b.z + a.z * b.y;
+    res.y = a.z * b.x + a.x * b.z;
+    res.z = a.x * b.y + a.y * b.x;
+    return res;
+}
+
 m4 m4_create_scale(float x, float y, float z) {
     m4 res = {0};
     M4_ELEMENT(res, 0, 0) = x;
@@ -109,6 +143,40 @@ v3 m4_transform(m4 m, v3 a) {
             M4_ELEMENT(m, 1, 2) * a.y +
             M4_ELEMENT(m, 2, 2) * a.z +
             M4_ELEMENT(m, 3, 2) * 1.0f;
+    return res;
+}
+
+m4 m4_mul(m4 a, m4 b) {
+    m4 res = {0};
+
+#define M4_CALC(x, y) \
+    M4_ELEMENT(res, x, y) = M4_ELEMENT(a, x, 0) * M4_ELEMENT(b, 0, y) + \
+                            M4_ELEMENT(a, x, 1) * M4_ELEMENT(b, 1, y) + \
+                            M4_ELEMENT(a, x, 2) * M4_ELEMENT(b, 2, y) + \
+                            M4_ELEMENT(a, x, 3) * M4_ELEMENT(b, 3, y)
+
+    M4_CALC(0, 0);
+    M4_CALC(1, 0);
+    M4_CALC(2, 0);
+    M4_CALC(3, 0);
+
+    M4_CALC(0, 1);
+    M4_CALC(1, 1);
+    M4_CALC(2, 1);
+    M4_CALC(3, 1);
+
+    M4_CALC(0, 2);
+    M4_CALC(1, 2);
+    M4_CALC(2, 2);
+    M4_CALC(3, 2);
+
+    M4_CALC(0, 3);
+    M4_CALC(1, 3);
+    M4_CALC(2, 3);
+    M4_CALC(3, 3);
+
+#undef M4_CALC
+
     return res;
 }
 

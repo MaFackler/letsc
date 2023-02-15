@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 
 #ifndef MAX_TESTCASES
 #define MAX_TESTCASES 1024
@@ -58,7 +59,7 @@ bool test__checks(const char *a, const char *b) {
 bool test__checkf(float a, float b) {
     float diff = a - b;
     // TODO: precision
-    return diff < 0.01f;
+    return fabsf(diff) < 0.01f;
 }
 
 #define test__check(a, b) _Generic((a, b), \
