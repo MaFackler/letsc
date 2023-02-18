@@ -54,6 +54,14 @@ v3 v3_cross(v3 a, v3 b) {
     return res;
 }
 
+float v3_dot(v3 a, v3 b) {
+    float res = 0;
+    res += a.x * b.x;
+    res += a.y * b.y;
+    res += a.z * b.z;
+    return res;
+}
+
 m4 m4_create_scale(float x, float y, float z) {
     m4 res = {0};
     M4_ELEMENT(res, 0, 0) = x;
