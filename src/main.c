@@ -50,7 +50,6 @@ char **get_shared_libs(const char *path, const char *prefix) {
 
 
 int main() {
-    Bitmap *bitmap = bitmap_create_from_file("data/font.bmp");
     SharedLib lib;
     //shared_lib_open(&lib, "build/shared_c_logo.so");
     //update_func update = shared_lib_get_function(&lib, "update");
@@ -66,7 +65,6 @@ int main() {
     SharedApi api = {
         .framebuffer = framebuffer,
         .platform = platform,
-        .font = bitmap,
         .gui = &gui,
     };
 
@@ -112,7 +110,7 @@ int main() {
         // before update
         framebuffer_clean(framebuffer, 0xFF000000);
         framebuffer_clean_stencil(framebuffer);
-        gui_init(&gui, api.framebuffer, api.font);
+        gui_init(&gui, api.framebuffer);
         gui_set_mouse(&gui, api.platform->mouse_x, api.platform->mouse_y, api.platform->mouse_left_down);
         // actual update
         update(&api);

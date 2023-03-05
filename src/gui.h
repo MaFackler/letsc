@@ -6,15 +6,6 @@ typedef struct {
     int y;
 } v2;
 
- 
-
-v2 gui__get_text_dim(char *text) {
-    // TODO: remove hardcoded stuff
-    const int cw = 7;
-    const int ch = 9;
-    return (v2) {cw * strlen(text), ch};
-}
-
 typedef enum GuiWidgetState {
     GUI_WIDGET_STATE_NOT_HOVERED,
     GUI_WIDGET_STATE_HOVERED,
@@ -23,16 +14,19 @@ typedef enum GuiWidgetState {
 
 typedef struct {
     Framebuffer *framebuffer;
-    Bitmap *font;
 
     int mouse_down;
     int mouse_x;
     int mouse_y;
 } Gui;
 
-void gui_init(Gui *gui, Framebuffer *framebuffer, Bitmap *font) {
+v2 gui__get_text_dim(Gui *gui, char *text) {
+    int x = font8x8_get_text_width(&gui->framebuffer->font, text);
+    return (v2) {x, 8};
+}
+
+void gui_init(Gui *gui, Framebuffer *framebuffer) {
     gui->framebuffer = framebuffer;
-    gui->font = font;
 }
 
 void gui_set_mouse(Gui *gui, int x, int y, bool down) {
@@ -58,13 +52,13 @@ unsigned int gui__set_color(Gui *gui, GuiWidgetState state) {
     unsigned int color = 0;
     switch (state) {
         case GUI_WIDGET_STATE_HOVERED:
-            color = 0xFFFF0000;
+            color = 0xFF0091D5;
             break;
         case GUI_WIDGET_STATE_NOT_HOVERED:
-            color = 0xFF00FF00;
+            color = 0xFF1C4E80;
             break;
         case GUI_WIDGET_STATE_ACTIVE:
-            color = 0xFF0000FF;
+            color = 0xFF4CB5F5;
             break;
             
     }
@@ -79,7 +73,7 @@ bool gui__state_to_bool(GuiWidgetState state) {
 
 bool gui_render_button(Gui *gui, int x, int y, char *text, unsigned int color) {
     bool res = false;
-    v2 dim = gui__get_text_dim(text);
+    v2 dim = gui__get_text_dim(gui, text);
     int margin = 2;
     dim.x += 2 * margin;
     dim.y += 2 * margin;
@@ -87,7 +81,8 @@ bool gui_render_button(Gui *gui, int x, int y, char *text, unsigned int color) {
     GuiWidgetState state = gui__check_rect(gui, pos.x, pos.x + dim.x, pos.y, pos.y + dim.y);
     gui__set_color(gui, state);
     framebuffer_fill_rect(gui->framebuffer, pos.x, pos.y, dim.x, dim.y);
-    framebuffer_render_text(gui->framebuffer, gui->font, pos.x + margin, pos.y + margin, text);
+    gui->framebuffer->color = 0xFFFFFFFF;
+    framebuffer_render_text(gui->framebuffer, pos.x + margin, pos.y + margin, text);
     return gui__state_to_bool(state);
 }
 

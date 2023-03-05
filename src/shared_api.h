@@ -9,7 +9,6 @@
 typedef struct {
     Platform *platform;
     Framebuffer *framebuffer;
-    Bitmap *font;
     Gui *gui;
 } SharedApi;
 

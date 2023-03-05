@@ -9,9 +9,10 @@ void update(SharedApi *api) {
     sprintf(&buf[0], "Mouse x=%d, y=%d", api->platform->mouse_x, api->platform->mouse_y);
 
     //render_char(framebuffer, bitmap, 10, 10, '2');
-    framebuffer_render_text(api->framebuffer, api->font, 10, 10, "# MF Code");
-    framebuffer_render_text(api->framebuffer, api->font, 10, 20, "---------");
-    framebuffer_render_text(api->framebuffer, api->font, 10, 30, &buf[0]);
+    api->framebuffer->color = 0xFFFFFFFF;
+    framebuffer_render_text(api->framebuffer, 10, 10, "# MF Code");
+    framebuffer_render_text(api->framebuffer, 10, 20, "---------");
+    framebuffer_render_text(api->framebuffer, 10, 30, &buf[0]);
 
     //if (p->mouse_left_down) {
     if (gui_render_button(api->gui, 30, 40, "Hello World", 0xFFFF0000)) {

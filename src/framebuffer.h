@@ -4,9 +4,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <bitmap.h>
+#include "font_8x8.h"
 
 #define MIN(a, b) (a < b ? a : b)
 #define MAX(a, b) (a > b ? a : b)
+#define FRAMEBUFFER_PIXEL(f, x, y) f->pixels[(y) * f->width + (x)] 
 
 typedef struct {
     uint32_t width;
@@ -15,6 +17,7 @@ typedef struct {
     uint8_t stencil_value;
     uint32_t *pixels;
     uint8_t *stencil;
+    Font8x8 font;
 } Framebuffer;
 
 typedef struct {
@@ -41,6 +44,7 @@ Framebuffer *framebuffer_create_external(uint32_t *pixels, uint32_t width, uint3
     res->stencil = malloc(sizeof(uint8_t) * width * height);
     res->stencil_value = 0xFF;
     memset(res->stencil, res->stencil_value, width * height);
+    font8x8_init(&res->font);
     return res;
 }
 
@@ -185,20 +189,24 @@ void framebuffer_fill_triangle_stencil(Framebuffer *framebuffer, int ax, int ay,
     }
 }
 
-void framebuffer_render_char(Framebuffer *framebuffer, Bitmap *bitmap, int *x, int y, char c) {
-    int xindex = (c - ' ') % 18;
-    int yindex = (c - ' ') / 18;
-    const int cw = 7;
-    const int ch = 9;
-    framebuffer_fill_bitmap_ex(framebuffer, bitmap->pixels, bitmap->width,
-                               xindex * cw, yindex * ch, *x, y, cw, ch);
+void framebuffer_render_char(Framebuffer *framebuffer, int *x, int y, char c) {
+    const int cw = 8;
+    const int ch = 8;
+    uint8_t *data = &framebuffer->font.data[(c - ' ') * 8];
+    for (int dy = 0; dy < ch; dy++) {
+        for (int dx = 0; dx < cw; dx++) {
+            if (0x01 << (cw - 1 - dx) & data[dy]) {
+                FRAMEBUFFER_PIXEL(framebuffer, *x + dx, y + dy) = framebuffer->color;
+            }
+        }
+    }
     *x += cw;
 }
 
-void framebuffer_render_text(Framebuffer *framebuffer, Bitmap *bitmap, int x, int y, char *text) {
+void framebuffer_render_text(Framebuffer *framebuffer, int x, int y, char *text) {
     char c = 0;
     while (c = *text++) {
-        framebuffer_render_char(framebuffer, bitmap, &x, y, c);
+        framebuffer_render_char(framebuffer, &x, y, c);
     }
 }
 
