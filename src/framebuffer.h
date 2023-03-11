@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <bitmap.h>
+#include <math.h>
 #include "font_8x8.h"
 
 #define MIN(a, b) (a < b ? a : b)
@@ -35,6 +36,10 @@ void cliprect_clip(ClipRect *rect, int x0, int y0, int x1, int y1) {
     rect->ymax = MIN(rect->ymax, y1);
 }
 
+bool cliprect_inside(ClipRect *rect, int x, int y) {
+    return rect->xmin <= x && x < rect->xmax && rect->ymin <= y && y < rect->ymax;
+}
+
 
 Framebuffer *framebuffer_create_external(uint32_t *pixels, uint32_t width, uint32_t height) {
     Framebuffer *res = malloc(sizeof(Framebuffer));
@@ -46,6 +51,26 @@ Framebuffer *framebuffer_create_external(uint32_t *pixels, uint32_t width, uint3
     memset(res->stencil, res->stencil_value, width * height);
     font8x8_init(&res->font);
     return res;
+}
+
+void framebuffer_draw_line(Framebuffer *framebuffer, int x1, int y1, int x2, int y2) {
+    ClipRect rect = {0, 0, framebuffer->width, framebuffer->height};
+    float m = (float) (y2 - y1) / (float) (x2 - x1);
+    if (fabs(m) <= 1.0f) {
+        // draw according to x
+        for (int x = MIN(x1, x2); x < MAX(x1, x2); ++x) {
+            float y = m * (x - x1) + y1;
+            if (cliprect_inside(&rect, x, y))
+                FRAMEBUFFER_PIXEL(framebuffer, x, (int) y) = framebuffer->color;
+        }
+    } else {
+        // draw according to y
+        for (int y = MIN(y1, y2); y < MAX(y1, y2); ++y) {
+            float x = (float) (y - y1) / m + x1;
+            if (cliprect_inside(&rect, x, y))
+                FRAMEBUFFER_PIXEL(framebuffer, (int) x, y) = framebuffer->color;
+        }
+    }
 }
 
 void framebuffer_fill_rect(Framebuffer *framebuffer, int x, int y, int w, int h) {
