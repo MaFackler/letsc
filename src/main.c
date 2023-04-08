@@ -108,7 +108,7 @@ int main() {
 
         // Render
         // before update
-        framebuffer_clean(framebuffer, 0xFF000000);
+        framebuffer_clean(framebuffer, 0xFF1a1a1a);
         framebuffer_clean_stencil(framebuffer);
         gui_init(&gui, api.framebuffer);
         gui_set_mouse(&gui, api.platform->mouse_x, api.platform->mouse_y, api.platform->mouse_left_down);

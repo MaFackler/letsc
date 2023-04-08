@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <assert.h>
 
 typedef struct __attribute__((packed)) {
     uint16_t bfType;
@@ -59,22 +60,32 @@ Bitmap* bitmap_create_from_file(const char *filename) {
     char *mem = bitmap__read_file(filename);
     BitmapHeader *header = bitmap__get_header(mem);
     BitmapInfo *info = bitmap__get_info(mem);
-    char *src = mem + header->bfOffBits;
+    assert(info->biCompression == 0 || info->biCompression == 3);
+    char *start = mem + header->bfOffBits;
     res->width = info->biWidth;
     res->height = info->biHeight;
     res->pixels = (uint32_t *) malloc(sizeof(uint32_t) * res->width * res->height);
 
     uint32_t *dest = res->pixels;
 
-    int stride = res->width * 3 + res->width % 4;
-    for (int y = 0; y < res->height; ++y) {
-        char *src_row = src + (res->height - y - 1) * stride;
-        for (int x = 0; x < res->width; ++x) {
-            uint8_t b = *src_row++;
-            uint8_t g = *src_row++;
-            uint8_t r = *src_row++;
-            uint32_t value = (0xFF << 24) | (r << 16) | (g << 8) | (b << 0);
-            *dest++ = value; 
+    if (info->biCompression == 0) {
+        int stride = res->width * 3 + res->width % 4;
+        for (int y = 0; y < res->height; ++y) {
+            char *src_row = start + (res->height - y - 1) * stride;
+            for (int x = 0; x < res->width; ++x) {
+                uint8_t b = *src_row++;
+                uint8_t g = *src_row++;
+                uint8_t r = *src_row++;
+                uint32_t value = (0xFF << 24) | (r << 16) | (g << 8) | (b << 0);
+                *dest++ = value; 
+            }
+        }
+    } else {
+        for (int y = 0; y < res->height; ++y) {
+            uint32_t *src_row = ((uint32_t *) start) + (res->width * (res->height - 1 - y));
+            for (int x = 0; x < res->width; ++x) {
+                *dest++ = *src_row++;
+            }
         }
     }
     free(mem);
