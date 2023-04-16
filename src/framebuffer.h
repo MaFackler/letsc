@@ -98,7 +98,13 @@ void framebuffer_fill_bitmap_ex(Framebuffer *framebuffer, uint32_t *pixels, int 
         uint32_t *row = &pixels[(sy + y - rect.ymin) * stride + sx];
         for (int x = rect.xmin; x < rect.xmax; ++x) {
             if (framebuffer->stencil[y * framebuffer->width + x] > 0) {
-                framebuffer->pixels[y * framebuffer->width + x] = *row++;
+                uint32_t *dest = &framebuffer->pixels[y * framebuffer->width + x];
+                uint8_t alpha = (0xFF000000 & *row) >> 24;
+                // TODO: alpha blending
+                if (alpha != 0) {
+                    *dest = *row;
+                }
+                *row++;
             }
         }
     }
