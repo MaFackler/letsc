@@ -90,6 +90,13 @@ void framebuffer_clean(Framebuffer *framebuffer, uint32_t color) {
     framebuffer_fill_rect(framebuffer, 0, 0, framebuffer->width, framebuffer->height);
 }
 
+void framebuffer__get_rgba(uint32_t value, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a) {
+    *a = (0xFF000000 & value) >> 24;
+    *r = (0x00FF0000 & value) >> 16;
+    *g = (0x0000FF00 & value) >> 8;
+    *b = (0x000000FF & value) >> 0;
+}
+
 
 void framebuffer_fill_bitmap_ex(Framebuffer *framebuffer, uint32_t *pixels, int stride, int sx, int sy, int dx, int dy, int w, int h) {
     ClipRect rect = {dx, dy, dx + w, dy + h};
@@ -99,11 +106,20 @@ void framebuffer_fill_bitmap_ex(Framebuffer *framebuffer, uint32_t *pixels, int 
         for (int x = rect.xmin; x < rect.xmax; ++x) {
             if (framebuffer->stencil[y * framebuffer->width + x] > 0) {
                 uint32_t *dest = &framebuffer->pixels[y * framebuffer->width + x];
-                uint8_t alpha = (0xFF000000 & *row) >> 24;
-                // TODO: alpha blending
-                if (alpha != 0) {
-                    *dest = *row;
-                }
+                uint8_t source_alpha, source_red, source_green, source_blue;
+                framebuffer__get_rgba(*row, &source_red, &source_green, &source_blue, &source_alpha);
+                uint8_t dest_alpha, dest_red, dest_green, dest_blue;
+                framebuffer__get_rgba(*dest, &dest_red, &dest_green, &dest_blue, &dest_alpha);
+
+                float t = source_alpha / 255.0f;
+                dest_red = dest_red + t * (source_red - dest_red);
+                dest_green = dest_green + t * (source_green - dest_green);
+                dest_blue = dest_blue + t * (source_blue - dest_blue);
+                dest_alpha = dest_alpha + t * (source_alpha - dest_alpha);
+                *dest = dest_alpha << 24 |
+                        dest_red << 16 |
+                        dest_green << 8 |
+                        dest_blue << 0;
                 *row++;
             }
         }

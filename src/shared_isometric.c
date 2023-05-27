@@ -27,11 +27,11 @@ uint8_t world[10][10][10] = {
 
     0, 2, 2, 2, 2, 2, 2, 2, 2, 0,
     0, 2, 0, 0, 0, 0, 0, 0, 2, 0,
+    0, 2, 0, 0, 0, 0, 0, 0, 4, 0,
+    0, 2, 0, 0, 0, 0, 0, 0, 4, 0,
+    0, 2, 0, 0, 0, 0, 0, 0, 4, 0,
     0, 2, 0, 0, 0, 0, 0, 0, 2, 0,
-    0, 2, 0, 0, 0, 0, 0, 0, 2, 0,
-    0, 2, 0, 0, 0, 0, 0, 0, 2, 0,
-    0, 2, 0, 0, 0, 0, 0, 0, 2, 0,
-    0, 2, 2, 0, 2, 0, 0, 2, 2, 0,
+    0, 2, 2, 0, 2, 4, 4, 2, 2, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -58,12 +58,14 @@ void update(SharedApi *api) {
         NULL, // Grass
         NULL, // Wood
         NULL, // Sand
+        NULL, // Glass
     };
     if (!initialized) {
         initialized = true;
         bitmaps[1] = bitmap_create_from_file("data/block.bmp");
         bitmaps[2] = bitmap_create_from_file("data/block_wood.bmp");
         bitmaps[3] = bitmap_create_from_file("data/block_sand.bmp");
+        bitmaps[4] = bitmap_create_from_file("data/block_glass.bmp");
     }
 
 
