@@ -25,6 +25,7 @@ typedef struct {
     int screen;
     KeyState input[PLATFORM_NUM_KEYS];
     bool mouse_left_down;
+    bool mouse_left_released;
     int mouse_x;
     int mouse_y;
 } Platform;
@@ -108,6 +109,7 @@ void platform_begin(Platform *p) {
             p->mouse_y = e.xbutton.y;
         } else if (e.type == ButtonRelease) {
             p->mouse_left_down = false;
+            p->mouse_left_released = true;
             p->mouse_x = e.xbutton.x;
             p->mouse_y = e.xbutton.y;
         }
@@ -120,6 +122,7 @@ void platform_begin(Platform *p) {
 }
 
 void platform_end(Platform *p) {
+    p->mouse_left_released = false;
 }
 
 bool platform_key_down(Platform *p, uint32_t keysym) {

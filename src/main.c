@@ -69,8 +69,9 @@ int main() {
     };
 
     int loaded_index = -1;
-    int used_index = 1;
+    size_t used_index = 1;
     char **shared_libs = get_shared_libs("src", "shared");
+    bool collapsed = false;
 
     bool quit = false;
     XEvent e;
@@ -100,8 +101,6 @@ int main() {
             used_index = MIN(++used_index, vec_size(shared_libs) - 1);
         }
 
-
-
         if (shared_lib_check_and_reload(&lib)) {
             update = shared_lib_get_function(&lib, "update");
         }
@@ -111,18 +110,22 @@ int main() {
         framebuffer_clean(framebuffer, 0xFF1a1a1a);
         framebuffer_clean_stencil(framebuffer);
         gui_init(&gui, api.framebuffer);
-        gui_set_mouse(&gui, api.platform->mouse_x, api.platform->mouse_y, api.platform->mouse_left_down);
+        gui_set_mouse(&gui, api.platform->mouse_x, api.platform->mouse_y,
+                      api.platform->mouse_left_down,
+                      api.platform->mouse_left_released);
         // actual update
         update(&api);
         // after update
         framebuffer_clean_stencil(framebuffer);
-        int y = 20;
+        gui_render_combobox(&gui, 500, 20, shared_libs, vec_size(shared_libs), &used_index, &collapsed);
+#if 0
         for (int i = 0; i < vec_size(shared_libs); ++i) {
             if (gui_render_button(&gui, 20, y, shared_libs[i], 0xFFFF0000)) {
                 used_index = i;
             }
             y += 20;
         }
+#endif
         platform_window_render(platform, &window);
         platform_end(platform);
     }
