@@ -10,6 +10,7 @@
 #include <bitmap.h>
 #include <shared_api.h>
 #include <gui.h>
+#include <dict.h>
 
 #include <dirent.h>
 #include <stdarg.h>
@@ -50,6 +51,9 @@ char **get_shared_libs(const char *path, const char *prefix) {
 
 
 int main() {
+
+    dict *d = dict_create(256);
+
     SharedLib lib;
     //shared_lib_open(&lib, "build/shared_c_logo.so");
     //update_func update = shared_lib_get_function(&lib, "update");
@@ -67,10 +71,19 @@ int main() {
         .platform = platform,
         .gui = &gui,
     };
+    gui_init(&gui, api.framebuffer);
 
     int loaded_index = -1;
+    const char *varfile = "variables.dat";
     size_t used_index = 1;
+    if (access(varfile, F_OK) == 0) {
+        FILE *fp = fopen(varfile, "r");
+        assert(fp != NULL);
+        fscanf(fp, "%llu", &used_index);
+        fclose(fp);
+    }
     char **shared_libs = get_shared_libs("src", "shared");
+    used_index = MIN(used_index, vec_size(shared_libs));
     bool collapsed = false;
 
     bool quit = false;
@@ -84,6 +97,9 @@ int main() {
             const char *lib_path = shared_libs[loaded_index];
             shared_lib_open(&lib, lib_path);
             update = shared_lib_get_function(&lib, "update");
+            FILE *fp = fopen(varfile, "w");
+            fprintf(fp, "%llu", used_index);
+            fclose(fp);
         }
         assert(update != NULL);
 
@@ -109,7 +125,6 @@ int main() {
         // before update
         framebuffer_clean(framebuffer, 0xFF1a1a1a);
         framebuffer_clean_stencil(framebuffer);
-        gui_init(&gui, api.framebuffer);
         gui_set_mouse(&gui, api.platform->mouse_x, api.platform->mouse_y,
                       api.platform->mouse_left_down,
                       api.platform->mouse_left_released);

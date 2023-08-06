@@ -1,6 +1,7 @@
 #include "gui.h"
 #include <shared_api.h>
 #include <vector.h>
+#include <dict.h>
 
 static size_t selected = 0;
 static bool collapsed = false;
@@ -96,126 +97,117 @@ void update(SharedApi *api) {
     Framebuffer *framebuffer = api->framebuffer;
     framebuffer->stencil_value = 0x00;
     framebuffer->color = 0xFFFF0000;
-#if 0
-    framebuffer_fill_rect_stencil(framebuffer, 10, 10, 80, 80);
-    framebuffer_fill_rect(framebuffer, 0, 0, 100, 100);
-
-    framebuffer_fill_circle_stencil(framebuffer, 200, 200, 40);
-    framebuffer_fill_circle(framebuffer, 200, 200, 50);
-
-    framebuffer_fill_triangle_stencil(framebuffer, 420, 410, 490, 410, 490, 480);
-    framebuffer_fill_triangle(framebuffer, 400, 400, 500, 400, 500, 500);
-#endif
     
     char *items[] = {
         "one",
         "two",
     };
     Gui *gui = api->gui;
+#if 0
 
-    Layouter layouter;
-    layouter.commands = NULL;
-    vec_push(layouter.commands, LAYOUT_COMMAND_VBOX_BEGIN);
-        vec_push(layouter.commands, LAYOUT_COMMAND_SLOT);
-        vec_push(layouter.commands, LAYOUT_COMMAND_BUTTON);
+    static float result = 0;
+    static float display_value = 0;
+    static char display[256] = {0};
+    static size_t display_index = 0;
+    static bool use_fraction = false;
+    static char operator = '\0';
 
+    void reset_display() {
+        display_value = atof(&display[0]);
+        memset(&display[0], 0, sizeof(display));
+        display_index = 0;
+    };
 
-        vec_push(layouter.commands, LAYOUT_COMMAND_VBOX_BEGIN);
-            vec_push(layouter.commands, LAYOUT_COMMAND_SLOT);
-            vec_push(layouter.commands, LAYOUT_COMMAND_BUTTON);
-            vec_push(layouter.commands, LAYOUT_COMMAND_SLOT);
-            vec_push(layouter.commands, LAYOUT_COMMAND_BUTTON);
-        vec_push(layouter.commands, LAYOUT_COMMAND_VBOX_END);
-
-
-        vec_push(layouter.commands, LAYOUT_COMMAND_SLOT);
-        vec_push(layouter.commands, LAYOUT_COMMAND_BUTTON);
-        vec_push(layouter.commands, LAYOUT_COMMAND_SLOT);
-        vec_push(layouter.commands, LAYOUT_COMMAND_BUTTON);
-    vec_push(layouter.commands, LAYOUT_COMMAND_VBOX_END);
-
-    Layout current_layout;
-    current_layout.type = LAYOUT_UNDEFINED;
-    Layout previous_layout;
-    LayoutCommand *widgets_to_render = NULL;
-
-    size_t slot_index = 0;
-    for (size_t i = 0; i < vec_size(layouter.commands); ++i) {
-        switch (layouter.commands[i]) {
-            case LAYOUT_COMMAND_VBOX_BEGIN:
-                previous_layout = current_layout;
-                if (previous_layout.type == LAYOUT_UNDEFINED)
-                    current_layout = vbox(0, 0, 500, 500, 3);
-                else:
-                    current_layout = vbox(previ
-                break;
-            case LAYOUT_COMMAND_VBOX_END:
-                assert(vec_size(widgets_to_render) == slot_index);
-                current_layout.count = slot_index;
-                for (size_t j = 0; j < vec_size(widgets_to_render); ++j) {
-                    LayoutRect rect = layout_slot(&current_layout, j, 0);
-                    gui_render_button_by_rect(gui, rect.x, rect.y, rect.width, rect.height, "test");
-                }
-                vec_clear(widgets_to_render);
-                slot_index = 0;
-                current_layout = previous_layout;
-                break;
-            case LAYOUT_COMMAND_SLOT:
-                assert(current_layout.type != LAYOUT_UNDEFINED);
-                slot_index++;
-                break;
-            case LAYOUT_COMMAND_BUTTON:
-                vec_push(widgets_to_render, LAYOUT_COMMAND_BUTTON);
-                break;
-            default:
-                assert(!"INVALID");
-
-            
-        }
+    gui_row(gui);
+    if (gui_button(gui, "7").pressed) {
+        display[display_index++] = '7';
+    }
+    if (gui_button(gui, "8").pressed) {
+        display[display_index++] = '8';
+    }
+    if (gui_button(gui, "9").pressed) {
+        display[display_index++] = '9';
+    }
+    if (gui_button(gui, "/").pressed) {
+        operator = '/';
+        reset_display();
+    }
+    gui_row(gui);
+    if (gui_button(gui, "4").pressed) {
+        display[display_index++] = '4';
+    }
+    if (gui_button(gui, "5").pressed) {
+        display[display_index++] = '5';
+    }
+    if (gui_button(gui, "6").pressed) {
+        display[display_index++] = '6';
+    }
+    if (gui_button(gui, "*").pressed) {
+        operator = '*';
+        reset_display();
     }
 
-    vec_free(layouter.commands);
-    vec_free(widgets_to_render);
+    gui_row(gui);
+    if (gui_button(gui, "1").pressed) {
+        display[display_index++] = '1';
+    }
+    if (gui_button(gui, "2").pressed) {
+        display[display_index++] = '2';
+    }
+    if (gui_button(gui, "3").pressed) {
+        display[display_index++] = '3';
+    }
+    if (gui_button(gui, "-").pressed) {
+        operator = '-';
+        reset_display();
+    }
 
-#if 0
-    Layout layout = vbox(0, 0, 400, 400, 3);
-        LayoutRect rect = layout_slot(&layout, 0, 0);
-        framebuffer->color = 0x000000;
-        //framebuffer_fill_rect(framebuffer, rect.x, rect.y, rect.width, rect.height);
-        gui_render_button_by_rect(gui, rect.x, rect.y, rect.width, rect.height, "test");
+    gui_row(gui);
+    if (gui_button(gui, "0").pressed) {
+        display[display_index++] = '0';
+    }
+    if (gui_button(gui, ".").pressed) {
+        display[display_index++] = '.';
+    }
+    if (gui_button(gui, "=").pressed) {
+        if (operator) {
+            switch (operator) {
+                case '+':
+                    result = display_value + atof(&display[0]);
+                    break;
+                case '-':
+                    result = display_value - atof(&display[0]);
+                    break;
+                case '*':
+                    result = display_value * atof(&display[0]);
+                    break;
+                case '/':
+                    result = display_value / atof(&display[0]);
+                    break;
+                default:
+                    assert(!"INVALID");
+                    break;
+            }
+            sprintf(&display[0], "%.2f", result);
+            display_value = 0;
+        }
+    }
+    if (gui_button(gui, "+").pressed) {
+        operator = '+';
+        reset_display();
+    }
 
-        rect = layout_slot(&layout, 1, 0);
-        Layout inner = {rect.x, rect.y, rect.width, rect.height, 3, LAYOUT_HBOX};
-            rect = layout_slot(&inner, 0, 0);
-            framebuffer->color = 0xFF0000;
-            framebuffer_fill_rect(framebuffer, rect.x, rect.y, rect.width, rect.height);
+    if (gui_button(gui, "C").pressed) {
+        operator = '\0';
+        result = 0;
+        reset_display();
+        display_value = 0;
+    }
 
-            rect = layout_slot(&inner, 1, 0);
-            framebuffer->color = 0x0000FF;
-            framebuffer_fill_rect(framebuffer, rect.x, rect.y, rect.width, rect.height);
-
-            rect = layout_slot(&inner, 2, 0);
-            framebuffer->color = 0xFF0000;
-            framebuffer_fill_rect(framebuffer, rect.x, rect.y, rect.width, rect.height);
-
-        rect = layout_slot(&layout, 2, 0);
-        framebuffer->color = 0xFFFF00;
-        framebuffer_fill_rect(framebuffer, rect.x, rect.y, rect.width, rect.height);
-
-        Layout floating = {rect.x, rect.y, rect.width, rect.height, 3, LAYOUT_VBOX_FLOAT};
-
-            rect = layout_slot(&floating, 0, 25);
-            framebuffer->color = 0xFFFFFF;
-            gui_render_button_by_rect(gui, rect.x, rect.y, rect.width, rect.height, "one");
-
-            rect = layout_slot(&floating, 1, 200);
-            framebuffer->color = 0x00FFFF;
-            gui_render_button_by_rect(gui, rect.x, rect.y, rect.width, rect.height, "two");
-
-    float x = 200;
-    float y = 100;
+    gui_row(gui);
+    static char result_buffer[256] = {0};
+    gui_label(gui, "Current: %s##display", &display[0]);
+    gui_render(gui);
 #endif
 
-    //gui_render_list(gui, x, y, items, sizeof(items) / sizeof(items[0]), &selected);
-    //gui_render_combobox(gui, x, y, items, sizeof(items) / sizeof(items[0]), &selected, &collapsed);
 }

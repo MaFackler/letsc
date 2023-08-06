@@ -21,11 +21,11 @@ $(TESTS_BIN): $(TESTS) $(HEADERS) $(BUILD_DIR)
 $(BUILD_DIR)/%: tests/%.c
 	$(CC) $< -o $@
 
-shared: $(SHARED_BIN)
+
 
 $(SHARED_BIN): $(SHARED_SRC)
 
-$(BUILD_DIR)/%.so: src/%.c
+$(BUILD_DIR)/%.so: src/%.c $(HEADERS)
 	echo "LOCK" > .shared.lock
 	$(CC) -fpic -shared -o $@ $<
 	rm .shared.lock

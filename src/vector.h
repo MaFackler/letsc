@@ -15,6 +15,8 @@ typedef struct {
 #define vec_push(v, e) (*vec_add(v) = e)
 #define vec_clear(v) ((v) ? (vec_header(v)->size = 0) : 0)
 #define vec_free(v) (((v) ? free(vec_header(v)) : 0), v = NULL)
+#define vec_last(v) &v[vec_size(v) -1]
+#define vec_pop_last(v) (vec_header(v)->size--)
 #define vec__check_size(v) \
     ((vec_size(v) == vec_capacity(v)) ? vec_grow((void **)&v, sizeof(*v)) : 0)
 

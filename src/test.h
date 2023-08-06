@@ -1,10 +1,12 @@
 #ifndef TEST_H
 #define TEST_H
-#include <stdio.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
 #include <math.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 
 #ifndef MAX_TESTCASES
 #define MAX_TESTCASES 1024
@@ -129,7 +131,32 @@ void test__print_code(const char *filename, size_t line) {
     test__set_color(TEST__COLOR_DEFAULT);
 }
 
+void test__on_segfault() {
+    fprintf(stderr, "GO SEGMENTATION FAULT\n");
+}
+
+
+void TEST_MESSAGE(const char *message) {
+    test__set_color(TEST__COLOR_TEST_CASE);
+    printf("%s\n", message);
+}
+
+#define TEST_MESSAGEF(fmt, ...) test__messagef(fmt "\n", __VA_ARGS__)
+void test__messagef(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    test__set_color(TEST__COLOR_TEST_CASE);
+    vprintf(fmt, args);
+    va_end(args);
+}
+
 void test__run(const char *filename) {
+    struct sigaction sa = {0};
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_NODEFER;
+    sa.sa_sigaction = test__on_segfault;
+    sigaction(SIGSEGV, &sa, NULL);
+
     test__set_color(TEST__COLOR_TITLE);
     printf("# Run tests of file %s\n", filename);
     

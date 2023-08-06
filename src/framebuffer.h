@@ -250,11 +250,15 @@ void framebuffer_render_char(Framebuffer *framebuffer, int *x, int y, char c) {
     *x += cw;
 }
 
-void framebuffer_render_text(Framebuffer *framebuffer, int x, int y, char *text) {
+void framebuffer_render_textn(Framebuffer *framebuffer, int x, int y, char *text, size_t n) {
     char c = 0;
-    while (c = *text++) {
-        framebuffer_render_char(framebuffer, &x, y, c);
+    for (size_t i = 0; i < n; ++i) {
+        framebuffer_render_char(framebuffer, &x, y, text[i]);
     }
+}
+
+void framebuffer_render_text(Framebuffer *framebuffer, int x, int y, char *text) {
+    framebuffer_render_textn(framebuffer, x, y, text, strlen(text));
 }
 
 
