@@ -30,14 +30,14 @@ TEST(gui) {
         TEST_MESSAGEF("- row %d", r + 1);
         Widget *row = gui.root->children[r];
         CHECK(row->rect.x, 0);
-        CHECK(row->rect.y, r * row_height);
-        CHECK(row->rect.w, 3 * label_width);
+        CHECK(row->rect.y, r * row_height + gui.spacing * (r + 1));
+        CHECK(row->rect.w, 3 * (label_width + gui.spacing) + gui.spacing);
         CHECK(row->rect.h, row_height);
         for (int c = 0; c <= r; ++c) {
             TEST_MESSAGEF("column %d", c + 1);
             Widget *w = row->children[c];
-            CHECK(w->rect.x, c * label_width);
-            CHECK(w->rect.y, r * row_height);
+            CHECK(w->rect.x, c * (label_width + gui.spacing) + gui.spacing);
+            CHECK(w->rect.y, r * (row_height + gui.spacing) + gui.spacing);
             CHECK(w->rect.w, label_width);
             CHECK(w->rect.h, row_height);
         }

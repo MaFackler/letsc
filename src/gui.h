@@ -26,7 +26,7 @@ typedef union GuiRect {
 
 typedef enum WidgetFlag {
     WIDGET_FLAG_BACKGROUND = (1 << 0),
-    WIDGET_FLAG_BACKGROUND2 = (1 << 1),
+    WIDGET_FLAG_DEBUG = (1 << 1),
     WIDGET_FLAG_TEXT = (1 << 2),
     WIDGET_FLAG_HOVERED = (1 << 3),
     WIDGET_FLAG_ACTIVE = (1 << 4),
@@ -142,7 +142,7 @@ Widget *gui__widget_create_by_name(Gui *gui, WidgetFlags flags, char *name) {
         dict_set(gui->widgets, hash, res);
     }
     strcpy(&res->raw_key[0], &buffer[0]);
-    res->flags = flags;
+    res->flags |= flags;
     return res;
 }
 
@@ -158,7 +158,7 @@ Widget *gui__widget_create(Gui *gui, WidgetFlags flags, char *fmt, va_list args)
         dict_set(gui->widgets, hash, res);
     }
     strcpy(&res->raw_key[0], &buffer[0]);
-    res->flags = flags;
+    res->flags |= flags;
     return res;
 }
 
@@ -255,15 +255,16 @@ WidgetInteraction gui_button(Gui *gui, char *fmt, ...) {
 WidgetInteraction gui_button_toggle(Gui *gui, char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    WidgetFlags flags = WIDGET_FLAG_BACKGROUND |
-        WIDGET_FLAG_TEXT |
-        WIDGET_FLAG_TOGGLE;
-    Widget *widget = gui__widget_create(gui, flags, fmt, args);
+    Widget *widget = gui__widget_create(gui,
+                                        WIDGET_FLAG_BACKGROUND |
+                                        WIDGET_FLAG_TEXT |
+                                        WIDGET_FLAG_BORDER |
+                                        WIDGET_FLAG_TOGGLE,
+                                        fmt, args);
     widget->size_hints[AXIS_X] = SIZE_HINT_TEXT;
     widget->size_hints[AXIS_Y] = SIZE_HINT_TEXT;
     gui__widget_link_parent(gui, widget);
     WidgetInteraction action = gui__widget_interact(gui, widget);
-    assert(widget->flags & WIDGET_FLAG_HOVERED);
     va_end(args);
     return action;
 }
@@ -337,6 +338,13 @@ void gui__render_widget(Gui *gui, Widget *widget) {
                               rect_background.w, rect_background.h);
 
     }
+    if (flags & WIDGET_FLAG_DEBUG) {
+        framebuffer->color = 0xFFFF0000;
+        framebuffer_fill_rect(framebuffer,
+                              rect_background.x, rect_background.y,
+                              rect_background.w, rect_background.h);
+
+    }
     if (flags & WIDGET_FLAG_HOVERED) {
         framebuffer->color = 0xFFFFFFFF;
         framebuffer_fill_rect(framebuffer,
@@ -396,10 +404,10 @@ void gui__layout_func_set_size_dependent_on_children(Gui *gui, Widget *widget) {
 
         int rect_index = dimension + 2;
         if (widget->size_hints[dimension] == SIZE_HINT_SUM_OF_CHILDREN) {
-            int size = 0;
+            int size = gui->spacing;
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i];
-                size += child->rect.E[rect_index];
+                size += child->rect.E[rect_index] + gui->spacing;
             }
             widget->rect.E[rect_index] = size;
         } else if (widget->size_hints[dimension] == SIZE_HINT_LARGEST_CHILD) {
@@ -408,6 +416,7 @@ void gui__layout_func_set_size_dependent_on_children(Gui *gui, Widget *widget) {
                 Widget *child = widget->children[i];
                 size = MAX(size, child->rect.E[rect_index]);
             }
+            //size += (vec_size(widget->children) + 1) * gui->spacing;
             widget->rect.E[rect_index] = size;
         }
     }
