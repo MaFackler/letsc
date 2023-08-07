@@ -139,6 +139,7 @@ void test__on_segfault() {
 void TEST_MESSAGE(const char *message) {
     test__set_color(TEST__COLOR_TEST_CASE);
     printf("%s\n", message);
+    test__set_color(TEST__COLOR_DEFAULT);
 }
 
 #define TEST_MESSAGEF(fmt, ...) test__messagef(fmt "\n", __VA_ARGS__)
@@ -164,6 +165,7 @@ void test__run(const char *filename) {
         TestCase *tc = &g_testcases[i];
         test__set_color(TEST__COLOR_TEST_CASE);
         printf("=> %s\n", tc->name);
+        test__set_color(TEST__COLOR_DEFAULT);
         tc->function();
     }
 

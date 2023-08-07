@@ -39,11 +39,20 @@ typedef enum WidgetFlag {
 
 typedef char * WidgetKey;
 
-typedef enum SizeHint {
+#define SIZE_TEXT ((SizeHint){SIZE_HINT_TEXT, 0})
+#define SIZE_PIXELS(p) ((SizeHint){SIZE_HINT_PIXELS, p})
+
+typedef enum SizeHintFlag {
     SIZE_HINT_NULL,
     SIZE_HINT_SUM_OF_CHILDREN,
     SIZE_HINT_LARGEST_CHILD,
     SIZE_HINT_TEXT,
+    SIZE_HINT_PIXELS,
+} SizeHintFlag;
+
+typedef struct {
+    SizeHintFlag type;
+    float value;
 } SizeHint;
 
 typedef enum Axis {
@@ -130,7 +139,7 @@ char *gui__get_hash(char *s) {
     return res;
 }
 
-Widget *gui__widget_create_by_name(Gui *gui, WidgetFlags flags, char *name) {
+Widget *gui__widget_create_by_name(Gui *gui, WidgetFlags flags, SizeHint hintx, SizeHint hinty, char *name) {
     char buffer[256] = {0};
     sprintf(&buffer[0], "%s", name);
     char *hash = gui__get_hash(&buffer[0]);
@@ -143,10 +152,12 @@ Widget *gui__widget_create_by_name(Gui *gui, WidgetFlags flags, char *name) {
     }
     strcpy(&res->raw_key[0], &buffer[0]);
     res->flags |= flags;
+    res->size_hints[AXIS_X] = hintx;
+    res->size_hints[AXIS_Y] = hinty;
     return res;
 }
 
-Widget *gui__widget_create(Gui *gui, WidgetFlags flags, char *fmt, va_list args) {
+Widget *gui__widget_create(Gui *gui, WidgetFlags flags, SizeHint hintx, SizeHint hinty, char *fmt, va_list args) {
     char buffer[256] = {0};
     vsprintf(&buffer[0], fmt, args);
     char *hash = gui__get_hash(&buffer[0]);
@@ -159,6 +170,8 @@ Widget *gui__widget_create(Gui *gui, WidgetFlags flags, char *fmt, va_list args)
     }
     strcpy(&res->raw_key[0], &buffer[0]);
     res->flags |= flags;
+    res->size_hints[AXIS_X] = hintx;
+    res->size_hints[AXIS_Y] = hinty;
     return res;
 }
 
@@ -168,9 +181,10 @@ void gui_init(Gui *gui, Framebuffer *framebuffer) {
     gui->spacing = 2;
     gui->widgets = dict_create(1024);
     // TODO: name??
-    gui->root = gui__widget_create_by_name(gui, 0, "root");
-    gui->root->size_hints[AXIS_X] = SIZE_HINT_LARGEST_CHILD;
-    gui->root->size_hints[AXIS_Y] = SIZE_HINT_SUM_OF_CHILDREN;
+    gui->root = gui__widget_create_by_name(gui, 0,
+                                           (SizeHint) {SIZE_HINT_LARGEST_CHILD},
+                                           (SizeHint) {SIZE_HINT_SUM_OF_CHILDREN},
+                                           "root");
     vec_push(gui->layout_stack, gui->root);
 }
 
@@ -234,18 +248,69 @@ WidgetInteraction gui__widget_interact(Gui *gui, Widget *widget) {
 }
 
 
-WidgetInteraction gui_button(Gui *gui, char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
+#if 0
+void foo_2(int a, int b) {
+}
+
+void foo_1(int a) {
+}
+
+#define foo_n(_2, _1, N, ...) foo_##N
+#define gui_button(...) \
+    gui_button_n(__VA_ARGS__, 2, 1)(__VA_ARGS__)(__VA_ARGS__)
+#endif
+
+
+
+WidgetInteraction gui_button_v(Gui *gui, SizeHint hintx, SizeHint hinty, char *fmt, va_list args) {
     Widget *widget = gui__widget_create(gui,
                                         WIDGET_FLAG_BACKGROUND |
                                         WIDGET_FLAG_TEXT |
                                         WIDGET_FLAG_CLICKABLE |
                                         WIDGET_FLAG_BORDER |
                                         WIDGET_FLAG_HOVERABLE,
+                                        hintx,
+                                        hinty,
                                         fmt, args);
-    widget->size_hints[AXIS_X] = SIZE_HINT_TEXT;
-    widget->size_hints[AXIS_Y] = SIZE_HINT_TEXT;
+    gui__widget_link_parent(gui, widget);
+    WidgetInteraction action = gui__widget_interact(gui, widget);
+    return action;
+}
+
+WidgetInteraction gui_button(Gui *gui, char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    WidgetInteraction action = gui_button_v(gui,
+                                            (SizeHint) {SIZE_HINT_TEXT, 0},
+                                            (SizeHint) {SIZE_HINT_TEXT, 0},
+                                            fmt,
+                                            args);
+    va_end(args);
+    return action;
+}
+
+WidgetInteraction gui_button_hintx(Gui *gui, SizeHint hint, char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    WidgetInteraction action = gui_button_v(gui,
+                                            hint,
+                                            (SizeHint) {SIZE_HINT_TEXT, 0},
+                                            fmt, args);
+    va_end(args);
+    return action;
+}
+
+WidgetInteraction gui_button_toggle_hintx(Gui *gui, SizeHint hint, char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    Widget *widget = gui__widget_create(gui,
+                                        WIDGET_FLAG_BACKGROUND |
+                                        WIDGET_FLAG_TEXT |
+                                        WIDGET_FLAG_BORDER |
+                                        WIDGET_FLAG_TOGGLE,
+                                        hint,
+                                        (SizeHint) {SIZE_HINT_TEXT, 0},
+                                        fmt, args);
     gui__widget_link_parent(gui, widget);
     WidgetInteraction action = gui__widget_interact(gui, widget);
     va_end(args);
@@ -260,13 +325,26 @@ WidgetInteraction gui_button_toggle(Gui *gui, char *fmt, ...) {
                                         WIDGET_FLAG_TEXT |
                                         WIDGET_FLAG_BORDER |
                                         WIDGET_FLAG_TOGGLE,
+                                        (SizeHint) {SIZE_HINT_TEXT, 0},
+                                        (SizeHint) {SIZE_HINT_TEXT, 0},
                                         fmt, args);
-    widget->size_hints[AXIS_X] = SIZE_HINT_TEXT;
-    widget->size_hints[AXIS_Y] = SIZE_HINT_TEXT;
     gui__widget_link_parent(gui, widget);
     WidgetInteraction action = gui__widget_interact(gui, widget);
     va_end(args);
     return action;
+}
+
+void gui_label_hintx(Gui *gui, SizeHint hint, char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    Widget *widget = gui__widget_create(gui,
+                                        WIDGET_FLAG_BACKGROUND | WIDGET_FLAG_TEXT,
+                                        hint,
+                                        (SizeHint) {SIZE_HINT_TEXT, 0},
+                                        fmt, args);
+    gui__widget_link_parent(gui, widget);
+    WidgetInteraction action = gui__widget_interact(gui, widget);
+    va_end(args);
 }
 
 void gui_label(Gui *gui, char *fmt, ...) {
@@ -274,37 +352,61 @@ void gui_label(Gui *gui, char *fmt, ...) {
     va_start(args, fmt);
     Widget *widget = gui__widget_create(gui,
                                         WIDGET_FLAG_BACKGROUND | WIDGET_FLAG_TEXT,
+                                        (SizeHint) {SIZE_HINT_TEXT, 0},
+                                        (SizeHint) {SIZE_HINT_TEXT, 0},
                                         fmt, args);
-    widget->size_hints[AXIS_X] = SIZE_HINT_TEXT;
-    widget->size_hints[AXIS_Y] = SIZE_HINT_TEXT;
     gui__widget_link_parent(gui, widget);
     WidgetInteraction action = gui__widget_interact(gui, widget);
     va_end(args);
 }
 
-void gui_combobox(Gui *gui, char *fmt, ...) {
+WidgetInteraction gui_combobox(Gui *gui, char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-#if 0
-    Widget *label = gui__widget_create(gui,
-                                        WIDGET_FLAG_BACKGROUND | WIDGET_FLAG_TEXT,
+    Widget *widget = gui__widget_create(gui,
+                                        WIDGET_FLAG_BACKGROUND, 
+                                        //SIZE_PIXELS(200),
+                                        (SizeHint) {SIZE_HINT_SUM_OF_CHILDREN, 0},
+                                        (SizeHint) {SIZE_HINT_LARGEST_CHILD, 0},
                                         fmt, args);
-    gui__widget_link_parent(gui, label);
+    Widget *label = gui__widget_create_by_name(gui,
+                                       WIDGET_FLAG_TEXT,
+                                       SIZE_PIXELS(280),
+                                       SIZE_PIXELS(20),
+                                       "foolabel");
 
     Widget *button = gui__widget_create_by_name(gui,
-                                        WIDGET_FLAG_BACKGROUND | WIDGET_FLAG_TEXT | WIDGET_FLAG_CLICKABLE,
-                                        ">");
+                                        WIDGET_FLAG_TEXT |
+                                        WIDGET_FLAG_CLICKABLE |
+                                        WIDGET_FLAG_BACKGROUND |
+                                        WIDGET_FLAG_BORDER |
+                                        WIDGET_FLAG_TOGGLE |
+                                        WIDGET_FLAG_HOVERABLE,
+                                        SIZE_PIXELS(20),
+                                        SIZE_PIXELS(20),
+                                        ">##foobutton");
+    vec_push(widget->children, label);
+    vec_push(widget->children, button);
+    gui__widget_link_parent(gui, widget);
     WidgetInteraction action = gui__widget_interact(gui, button);
-#endif
+    if (action.active) {
+        gui->framebuffer->color = 0xFFFF0000;
+        framebuffer_fill_rect(gui->framebuffer,
+                              label->rect.x,
+                              label->rect.y + label->rect.h,
+                              label->rect.w,
+                              100);
+    }
     va_end(args);
+    return action;
 }
 
 void gui_push_row(Gui *gui, char *name) {
     Widget *widget = gui__widget_create_by_name(gui,
                                                 0,
+                                                (SizeHint) {SIZE_HINT_SUM_OF_CHILDREN, gui->spacing},
+                                                (SizeHint) {SIZE_HINT_LARGEST_CHILD, 0},
                                                 name);
-    widget->size_hints[AXIS_X] = SIZE_HINT_SUM_OF_CHILDREN;
-    widget->size_hints[AXIS_Y] = SIZE_HINT_LARGEST_CHILD;
     gui__widget_link_parent(gui, widget);
     vec_push(gui->layout_stack, widget);
 }
@@ -320,19 +422,20 @@ void gui__render_widget(Gui *gui, Widget *widget) {
     char *label = gui__widget_extract_label(widget, &label_size);
 
     GuiRect rect_background = widget->rect;
+    if (flags & WIDGET_FLAG_BORDER) {
+        // TODO: just draw border... this does currently not work with transparent background
+        framebuffer->color = 0xFFBBBBBB;
+        framebuffer_fill_rect(framebuffer,
+                              rect_background.x, rect_background.y,
+                              rect_background.w, rect_background.h);
+        rect_background.x += 1;
+        rect_background.y += 1;
+        rect_background.w -= 2;
+        rect_background.h -= 2;
+        framebuffer->color = gui__colors[0];
+    }
     if (flags & WIDGET_FLAG_BACKGROUND) {
         framebuffer->color = gui__colors[0];
-        if (flags & WIDGET_FLAG_BORDER) {
-            framebuffer->color = 0xFFBBBBBB;
-            framebuffer_fill_rect(framebuffer,
-                                  rect_background.x, rect_background.y,
-                                  rect_background.w, rect_background.h);
-            rect_background.x += 1;
-            rect_background.y += 1;
-            rect_background.w -= 2;
-            rect_background.h -= 2;
-            framebuffer->color = gui__colors[0];
-        }
         framebuffer_fill_rect(framebuffer,
                               rect_background.x, rect_background.y,
                               rect_background.w, rect_background.h);
@@ -386,16 +489,20 @@ void gui__render_widget_and_children(Gui *gui, Widget *widget) {
 }
 
 void gui__layout_func_set_fixed_sizes(Gui *gui, Widget *widget) {
-    if (widget->size_hints[AXIS_X] == SIZE_HINT_TEXT) {
+    if (widget->size_hints[AXIS_X].type == SIZE_HINT_TEXT) {
         size_t n = 0;
         char *label = gui__widget_extract_label(widget, &n);
         int w = n * 8 + 2 * gui->margin;
         widget->rect.w = w;
+    } else if (widget->size_hints[AXIS_X].type == SIZE_HINT_PIXELS) {
+        widget->rect.w = widget->size_hints[AXIS_X].value;
     }
 
-    if (widget->size_hints[AXIS_Y] == SIZE_HINT_TEXT) {
+    if (widget->size_hints[AXIS_Y].type == SIZE_HINT_TEXT) {
         // TODO: line height
         widget->rect.h = 20;
+    } else if (widget->size_hints[AXIS_Y].type == SIZE_HINT_PIXELS) {
+        widget->rect.h = widget->size_hints[AXIS_Y].value;
     }
 }
 
@@ -403,20 +510,19 @@ void gui__layout_func_set_size_dependent_on_children(Gui *gui, Widget *widget) {
     for (int dimension = 0; dimension < AXIS_COUNT; ++dimension) {
 
         int rect_index = dimension + 2;
-        if (widget->size_hints[dimension] == SIZE_HINT_SUM_OF_CHILDREN) {
-            int size = gui->spacing;
+        if (widget->size_hints[dimension].type == SIZE_HINT_SUM_OF_CHILDREN) {
+            int size = widget->size_hints[dimension].value;
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i];
-                size += child->rect.E[rect_index] + gui->spacing;
+                size += child->rect.E[rect_index] + widget->size_hints[dimension].value;
             }
             widget->rect.E[rect_index] = size;
-        } else if (widget->size_hints[dimension] == SIZE_HINT_LARGEST_CHILD) {
+        } else if (widget->size_hints[dimension].type == SIZE_HINT_LARGEST_CHILD) {
             int size = 0;
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i];
                 size = MAX(size, child->rect.E[rect_index]);
             }
-            //size += (vec_size(widget->children) + 1) * gui->spacing;
             widget->rect.E[rect_index] = size;
         }
     }
@@ -425,19 +531,17 @@ void gui__layout_func_set_xy(Gui *gui, Widget *widget) {
     for (int dimension = 0; dimension < AXIS_COUNT; ++dimension) {
         int rect_index = dimension + 2;
         int other_dimension = dimension == 0 ? 1 : 0;
-        if (widget->size_hints[dimension] == SIZE_HINT_SUM_OF_CHILDREN) {
-            // printf("children for -- %s dim %d\n", widget->key, dimension);
+        if (widget->size_hints[dimension].type == SIZE_HINT_SUM_OF_CHILDREN) {
             int pos = widget->rect.E[dimension];
+            int spacing = widget->size_hints[dimension].value;
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i]; 
-                child->rect.E[dimension] = pos + gui->spacing;
-                // printf("    %s - pos %d\n", child->key, pos);
-                pos += child->rect.E[rect_index] + gui->spacing;
+                child->rect.E[dimension] = pos + spacing;
+                pos += child->rect.E[rect_index] + spacing;
                 child->rect.E[other_dimension] = widget->rect.E[other_dimension];
             }
-        } else if (widget->size_hints[dimension] == SIZE_HINT_LARGEST_CHILD) {
+        } else if (widget->size_hints[dimension].type == SIZE_HINT_LARGEST_CHILD) {
             int size = 0;
-            // printf("largest for -- %s dim %d\n", widget->key, dimension);
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i]; 
                 size = MAX(size, child->rect.E[rect_index]);
@@ -446,7 +550,6 @@ void gui__layout_func_set_xy(Gui *gui, Widget *widget) {
                 Widget *child = widget->children[i]; 
                 child->rect.E[rect_index] = size;
                 //child->rect[other_dimension] = widget->rect[other_dimension];
-                // printf("    %s - size %d == %f\n", child->key, size, child->rect[rect_index]);
             }
         }
     }
