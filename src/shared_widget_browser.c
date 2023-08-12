@@ -50,10 +50,17 @@ void update(SharedApi *api) {
     gui_pop_row(gui);
 #endif
 
+    static char *items[] = {
+        "item1",
+        "item2",
+        "item3"
+    };
+    static size_t index = 0;
+
     gui_push_row(gui, "combobox");
-    gui_label_hintx(gui, SIZE_PIXELS(col_size), "Combobox");
-    if (gui_combobox(gui, "test").pressed) {
-        printf("pressed\n");
+    gui_label_hintx(gui, SIZE_PIXELS(col_size), "hey");
+    if (gui_combobox(gui, &items[0], 3, &index, "test", &index).pressed) {
+        printf("Pressed %s\n", items[index]);
     }
     gui_pop_row(gui);
 

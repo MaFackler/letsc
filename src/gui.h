@@ -70,6 +70,7 @@ struct Widget {
     WidgetKey key;
 
     GuiRect rect;
+    float offsets[AXIS_COUNT];
     SizeHint size_hints[AXIS_COUNT];
 };
 
@@ -360,45 +361,68 @@ void gui_label(Gui *gui, char *fmt, ...) {
     va_end(args);
 }
 
-WidgetInteraction gui_combobox(Gui *gui, char *fmt, ...) {
+WidgetInteraction gui_combobox(Gui *gui, char **items, size_t n, size_t *index, char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    Widget *widget = gui__widget_create(gui,
-                                        WIDGET_FLAG_BACKGROUND, 
-                                        //SIZE_PIXELS(200),
-                                        (SizeHint) {SIZE_HINT_SUM_OF_CHILDREN, 0},
-                                        (SizeHint) {SIZE_HINT_LARGEST_CHILD, 0},
-                                        fmt, args);
+    Widget *combobox = gui__widget_create(gui,
+                                          WIDGET_FLAG_BACKGROUND,
+                                          //SIZE_PIXELS(200),
+                                          (SizeHint) {SIZE_HINT_SUM_OF_CHILDREN, 0},
+                                          (SizeHint) {SIZE_HINT_LARGEST_CHILD, 0},
+                                          fmt, args);
+    char base_name[256] = {0};
+    char buf[256] = {0};
+    vsprintf(&base_name[0], fmt, args);
+    sprintf(&buf[0], "%s##%s_label", items[*index], &base_name[0]);
     Widget *label = gui__widget_create_by_name(gui,
-                                       WIDGET_FLAG_TEXT,
-                                       SIZE_PIXELS(280),
-                                       SIZE_PIXELS(20),
-                                       "foolabel");
-
+                                               WIDGET_FLAG_TEXT,
+                                               SIZE_PIXELS(180),
+                                               SIZE_TEXT,
+                                               &buf[0]);
+    sprintf(&buf[0], "%s##%s_button", "+", &base_name[0]);
     Widget *button = gui__widget_create_by_name(gui,
-                                        WIDGET_FLAG_TEXT |
-                                        WIDGET_FLAG_CLICKABLE |
-                                        WIDGET_FLAG_BACKGROUND |
-                                        WIDGET_FLAG_BORDER |
-                                        WIDGET_FLAG_TOGGLE |
-                                        WIDGET_FLAG_HOVERABLE,
-                                        SIZE_PIXELS(20),
-                                        SIZE_PIXELS(20),
-                                        ">##foobutton");
-    vec_push(widget->children, label);
-    vec_push(widget->children, button);
-    gui__widget_link_parent(gui, widget);
-    WidgetInteraction action = gui__widget_interact(gui, button);
-    if (action.active) {
-        gui->framebuffer->color = 0xFFFF0000;
-        framebuffer_fill_rect(gui->framebuffer,
-                              label->rect.x,
-                              label->rect.y + label->rect.h,
-                              label->rect.w,
-                              100);
+                                                WIDGET_FLAG_TEXT |
+                                                WIDGET_FLAG_TOGGLE,
+                                                SIZE_PIXELS(20),
+                                                SIZE_TEXT,
+                                                &buf[0]);
+    vec_push(combobox->children, label);
+    vec_push(combobox->children, button);
+
+    WidgetInteraction btn_action = gui__widget_interact(gui, button);
+    WidgetInteraction res = {0};
+    if (btn_action.active) {
+        sprintf(&buf[0], "%s_dropdown", &base_name[0]);
+        Widget* dropdown = gui__widget_create_by_name(gui,
+                                                      WIDGET_FLAG_BACKGROUND,
+                                                      SIZE_PIXELS(180),
+                                                      (SizeHint) {SIZE_HINT_SUM_OF_CHILDREN, 0},
+                                                      &buf[0]);
+        dropdown->offsets[AXIS_Y] = 20;
+        vec_push(label->children, dropdown);
+        for (int i = 0; i < n; ++i) {
+            char *item = items[i];
+            sprintf(&buf[0], "%s##%s_dropdown_label_%d", item, &base_name[0], i);
+            Widget* l = gui__widget_create_by_name(gui,
+                    WIDGET_FLAG_TEXT |
+                    WIDGET_FLAG_HOVERABLE,
+                    SIZE_PIXELS(180),
+                    SIZE_TEXT,
+                    &buf[0]);
+
+            WidgetInteraction item_interaction = gui__widget_interact(gui, l);
+            if (item_interaction.pressed) {
+                *index = i;
+                button->flags &= ~(WIDGET_FLAG_ACTIVE);
+                res.pressed = true;
+            }
+
+            vec_push(dropdown->children, l);
+        }
     }
+    gui__widget_link_parent(gui, combobox);
     va_end(args);
-    return action;
+    return res;
 }
 
 void gui_push_row(Gui *gui, char *name) {
@@ -529,7 +553,7 @@ void gui__layout_func_set_size_dependent_on_children(Gui *gui, Widget *widget) {
 }
 void gui__layout_func_set_xy(Gui *gui, Widget *widget) {
     for (int dimension = 0; dimension < AXIS_COUNT; ++dimension) {
-        int rect_index = dimension + 2;
+        int size_index = dimension + 2;
         int other_dimension = dimension == 0 ? 1 : 0;
         if (widget->size_hints[dimension].type == SIZE_HINT_SUM_OF_CHILDREN) {
             int pos = widget->rect.E[dimension];
@@ -537,20 +561,36 @@ void gui__layout_func_set_xy(Gui *gui, Widget *widget) {
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i]; 
                 child->rect.E[dimension] = pos + spacing;
-                pos += child->rect.E[rect_index] + spacing;
+                pos += child->rect.E[size_index] + spacing;
                 child->rect.E[other_dimension] = widget->rect.E[other_dimension];
             }
         } else if (widget->size_hints[dimension].type == SIZE_HINT_LARGEST_CHILD) {
             int size = 0;
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i]; 
-                size = MAX(size, child->rect.E[rect_index]);
+                size = MAX(size, child->rect.E[size_index]);
             }
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i]; 
-                child->rect.E[rect_index] = size;
+                child->rect.E[size_index] = size;
                 //child->rect[other_dimension] = widget->rect[other_dimension];
             }
+        } else if (widget->size_hints[dimension].type == SIZE_HINT_PIXELS ||
+                   widget->size_hints[dimension].type == SIZE_HINT_TEXT) {
+            for (int i = 0; i < vec_size(widget->children); ++i) {
+                Widget *child = widget->children[i]; 
+                child->rect.E[dimension] = widget->rect.E[dimension] + child->offsets[dimension];
+            }
+#if 0
+            // TODO: this is a dirty hack for dropdowns
+            int x = 0;
+            int y = widget->rect.h;
+            int offsets[] = {0, widget->rect.h};
+            for (int i = 0; i < vec_size(widget->children); ++i) {
+                Widget *child = widget->children[i]; 
+                child->rect.E[dimension] = widget->rect.E[dimension] + offsets[dimension];
+            }
+#endif
         }
     }
 

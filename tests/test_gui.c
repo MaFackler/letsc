@@ -51,6 +51,38 @@ TEST(gui) {
 TEST(gui_combobox) {
     Gui gui = {0};
     gui_init(&gui, NULL);
+    gui_push_row(&gui, "myrow");
+    gui_label(&gui, "my label");
+    gui_combobox(&gui, "my combobox");
+    gui_pop_row(&gui);
+    gui__do_layout(&gui, 0, 0, 800, 600);
+    CHECK(vec_size(gui.root->children), 1);
+    Widget *row = gui.root->children[0];
+
+    Widget *combobox = row->children[1];
+    CHECK(vec_size(combobox->children), 2);
+    CHECK(combobox->rect.x, 78);
+    CHECK(combobox->rect.y, 0);
+    CHECK(combobox->rect.w, 200);
+    CHECK(combobox->rect.h, 20);
+
+    Widget *label = combobox->children[0];
+    CHECK(label->rect.x, 78);
+    CHECK(label->rect.y, 0);
+    CHECK(label->rect.w, 180);
+    CHECK(label->rect.h, 20);
+
+    Widget *button = combobox->children[1];
+    CHECK(button->rect.x, 78 + 180);
+    CHECK(button->rect.y, 0);
+    CHECK(button->rect.w, 20);
+    CHECK(button->rect.h, 20);
+
+    Widget *dropdown = label->children[0];
+    CHECK(dropdown->rect.x, 78);
+    CHECK(dropdown->rect.y, 20);
+
+#if 0
 
     gui_push_row(&gui, "myrow");
     gui_label_hintx(&gui, SIZE_PIXELS(300), "my label");
@@ -93,6 +125,7 @@ TEST(gui_combobox) {
     CHECK(cmb_button->rect.y, gui.spacing);
     CHECK(cmb_button->rect.w, 100);
     CHECK(cmb_button->rect.h, 20);
+#endif
 
 }
 
