@@ -53,7 +53,11 @@ TEST(gui_combobox) {
     gui_init(&gui, NULL);
     gui_push_row(&gui, "myrow");
     gui_label(&gui, "my label");
-    gui_combobox(&gui, "my combobox");
+    char *items[] = {
+        "one",
+        "two"
+    };
+    gui_combobox(&gui, &items[0], sizeof(items), 0, "my combobox");
     gui_pop_row(&gui);
     gui__do_layout(&gui, 0, 0, 800, 600);
     CHECK(vec_size(gui.root->children), 1);
@@ -129,8 +133,54 @@ TEST(gui_combobox) {
 
 }
 
+TEST(gui_slider) {
+    Gui gui = {0};
+    gui_init(&gui, NULL);
+    //gui_push_row(&gui, "myrow");
+    float myvalue = 0;
+    float minvalue = -200;
+    float maxvalue = 200;
+    gui_slider(&gui, &myvalue, minvalue, maxvalue, "my slider");
+
+    gui__do_layout(&gui, 0, 0, 800, 600);
+
+    TEST_MESSAGE("Check Slider");
+    Widget *slider = gui.root->children[0];
+    CHECK(slider->key, "my slider");
+    CHECK(slider->rect.x, 0);
+    CHECK(slider->rect.y, 0);
+    CHECK(slider->rect.w, 200);
+    CHECK(slider->rect.h, 20);
+
+
+
+    TEST_MESSAGE("Check Slider Knob");
+    Widget *knob = slider->children[0];
+    CHECK(knob->key, "my slider_knob");
+    CHECK(knob->rect.x, 0);
+    CHECK(knob->rect.y, 0);
+    CHECK(knob->rect.w, 20);
+    CHECK(knob->rect.h, 20);
+
+    gui__end(&gui);
+    myvalue = 100; 
+    // Test slider value changed
+    gui_slider(&gui, &myvalue, minvalue, maxvalue, "my slider");
+    gui__do_layout(&gui, 0, 0, 800, 600);
+    CHECK(knob->key, "my slider_knob");
+    // NOTE: slider with is 200 and knob with is 180
+    // so it will be 10% of 180
+    CHECK(knob->rect.x, 45);
+    CHECK(knob->rect.y, 0);
+    CHECK(knob->rect.w, 20);
+    CHECK(knob->rect.h, 20);
+
+
+}
+
 int main() {
     //TEST_REGISTER(gui);
-    TEST_REGISTER(gui_combobox);
+    //TEST_REGISTER(gui_combobox);
+    TEST_REGISTER(gui_slider);
     TEST_RUN();
 }

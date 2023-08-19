@@ -15,8 +15,5 @@ void update(SharedApi *api) {
     framebuffer_render_text(api->framebuffer, 10, 30, &buf[0]);
 
     //if (p->mouse_left_down) {
-    if (gui_render_button(api->gui, 30, 40, "Hello World", 0xFFFF0000)) {
-        framebuffer_fill_rect(api->framebuffer, 200, 200, 100, 100);
-    }
     //framebuffer_fill_bitmap(framebuffer, bitmap->pixels, 0, 0, bitmap->width, bitmap->height);
 }

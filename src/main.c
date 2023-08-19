@@ -11,9 +11,12 @@
 #include <shared_api.h>
 #include <gui.h>
 #include <dict.h>
+#include <renderer.h>
 
 #include <dirent.h>
 #include <stdarg.h>
+
+static Framebuffer *framebuffer = NULL;
 
 char *string_create(char *fmt, ...) {
     va_list args1;
@@ -49,6 +52,22 @@ char **get_shared_libs(const char *path, const char *prefix) {
     return res;
 }
 
+void set_color(unsigned int color) {
+    framebuffer->color = color;
+}
+
+void push_rect(float x, float y, float w, float h, int layer) {
+}
+
+void push_text(float x, float y, char *text, size_t n, int layer) {
+}
+
+int get_width(void) {
+}
+
+int get_height(void) {
+}
+
 
 int main() {
 
@@ -63,7 +82,9 @@ int main() {
     Platform *platform = platform_create();
     PlatformWindow window = platform_window_open(platform, 0, 0, 800, 600);
 
-    Framebuffer *framebuffer = framebuffer_create_external(window.pixels, window.width, window.height);
+    framebuffer = framebuffer_create_external(window.pixels, window.width, window.height);
+    Renderer renderer = {0};
+    renderer_init(&renderer, framebuffer->width, framebuffer->height);
     Gui gui = {0};
 
     SharedApi api = {
@@ -71,7 +92,7 @@ int main() {
         .platform = platform,
         .gui = &gui,
     };
-    gui_init(&gui, api.framebuffer);
+    gui_init(&gui, &renderer);
 
     int loaded_index = -1;
     const char *varfile = "variables.dat";
@@ -132,8 +153,8 @@ int main() {
         update(&api);
         // after update
         framebuffer_clean_stencil(framebuffer);
-        gui_render_combobox(&gui, 500, 20, shared_libs, vec_size(shared_libs), &used_index, &collapsed);
 #if 0
+        gui_render_combobox(&gui, 500, 20, shared_libs, vec_size(shared_libs), &used_index, &collapsed);
         for (int i = 0; i < vec_size(shared_libs); ++i) {
             if (gui_render_button(&gui, 20, y, shared_libs[i], 0xFFFF0000)) {
                 used_index = i;
@@ -141,6 +162,31 @@ int main() {
             y += 20;
         }
 #endif
+        for (int layer_index = 0; layer_index < RENDERER_NUM_LAYERS; ++layer_index) {
+            RenderCommand *commands = renderer.layer_commands[layer_index];
+            for (int i = 0; i < vec_size(commands); ++i) {
+                RenderCommand cmd = commands[i];
+                framebuffer->color = cmd.color;
+                switch (cmd.type) {
+                    case RENDER_COMMAND_RECT:
+                        framebuffer_fill_rect(framebuffer,
+                                              cmd.cmd_rect.x,
+                                              cmd.cmd_rect.y,
+                                              cmd.cmd_rect.w,
+                                              cmd.cmd_rect.h);
+                        break;
+                    case RENDER_COMMAND_TEXT:
+                        framebuffer_render_textn(framebuffer,
+                                                 cmd.cmd_text.x,
+                                                 cmd.cmd_text.y,
+                                                 cmd.cmd_text.text,
+                                                 cmd.cmd_text.n);
+                        break;
+
+                }
+            }
+        }
+        renderer_end_frame(&renderer);
         platform_window_render(platform, &window);
         platform_end(platform);
     }

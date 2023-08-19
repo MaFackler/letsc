@@ -1,6 +1,20 @@
 #include "gui.h"
 #include <shared_api.h>
 
+int lerpc(int from, int to, float t) {
+    int32_t r1 = COLOR_EXTRACT_RED(from);
+    int32_t g1 = COLOR_EXTRACT_GREEN(from);
+    int32_t b1 = COLOR_EXTRACT_BLUE(from);
+    int32_t r2 = COLOR_EXTRACT_RED(to);
+    int32_t g2 = COLOR_EXTRACT_GREEN(to);
+    int32_t b2 = COLOR_EXTRACT_BLUE(to);
+
+    int32_t r3 = r1 + (r2 - r1) * t;
+    int32_t g3 = g1 + (g2 - g1) * t;
+    int32_t b3 = b1 + (b2 - b1) * t;
+    return 0xFF000000 | MIN(r3, 255) << 16 | MIN(g3, 255) << 8 | MIN(b3, 255) << 0;
+}
+
 
 void update(SharedApi *api) {
     Gui *gui = api->gui;
@@ -57,12 +71,60 @@ void update(SharedApi *api) {
     };
     static size_t index = 0;
 
-    gui_push_row(gui, "combobox");
-    gui_label_hintx(gui, SIZE_PIXELS(col_size), "hey");
+    gui_push_row(gui, "combobox_row");
+    gui_label_hintx(gui, SIZE_PIXELS(col_size), "Combobox");
     if (gui_combobox(gui, &items[0], 3, &index, "test", &index).pressed) {
         printf("Pressed %s\n", items[index]);
     }
     gui_pop_row(gui);
+
+    static bool checked = false;
+    gui_push_row(gui, "checkbox_row");
+    gui_label_hintx(gui, SIZE_PIXELS(col_size), "Checkbox");
+    if (gui_checkbox(gui, &checked, "My Checkbox").pressed) {
+        printf("Pressed checkbox\n");
+    }
+    gui_pop_row(gui);
+
+    static float value = -90.0f;
+    gui_push_row(gui, "slider_row");
+    gui_label_hintx(gui, SIZE_PIXELS(col_size), "Checkbox");
+    if (gui_slider(gui, &value, -100, 100, "My Slider").pressed) {
+    }
+    gui_pop_row(gui);
+
+
+    int c = 0xFF1C4E80;
+    //int c = 0xfb4934;
+    int cdark = lerpc(c, BLACK, 0.4);
+    int clight = lerpc(c, WHITE, 0.2);
+    COLOR(c);
+    int x = 100;
+    int y = 100;
+    const int w = 200;
+    const int h = 30;
+    FILL_RECT(x, y, w, h);
+    COLOR(clight);
+    FILL_RECT(x, y, 1, h);
+    FILL_RECT(x, y, w, 1);
+
+    COLOR(cdark);
+    FILL_RECT(x + w - 1, y, 1, h);
+    FILL_RECT(x, y + h - 1, w, 1);
+
+    COLOR(BLACK);
+    FILL_RECT(x - 1, y - 1, w + 2, 1);
+    FILL_RECT(x - 1, y - 1, 1, h + 2);
+
+    FILL_RECT(x - 1, y + h, w + 2, 1);
+    FILL_RECT(x + w, y - 1, 1, h + 2);
+
+    char *text = "Hello World!";
+    COLOR(0xFF222222);
+    TEXT(x + 60 + 1, y + 10 + 2, text);
+    COLOR(0xFFCCCCCC);
+    TEXT(x + 60, y + 10, text);
+
 
 
     gui_render(gui);
