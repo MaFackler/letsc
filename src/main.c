@@ -153,15 +153,19 @@ int main() {
         update(&api);
         // after update
         framebuffer_clean_stencil(framebuffer);
-#if 0
-        gui_render_combobox(&gui, 500, 20, shared_libs, vec_size(shared_libs), &used_index, &collapsed);
-        for (int i = 0; i < vec_size(shared_libs); ++i) {
-            if (gui_render_button(&gui, 20, y, shared_libs[i], 0xFFFF0000)) {
-                used_index = i;
-            }
-            y += 20;
+
+        GUI_PANEL(&gui, "shared_libs_panel", 500, 2) {
+            gui_combobox(&gui, shared_libs, vec_size(shared_libs), &used_index, "cmb_shared_libs");
         }
+
+#if 0
+        gui_push_panel(&gui, "shared_libs_panel", 500, 2);
+            gui_combobox(&gui, shared_libs, vec_size(shared_libs), &used_index, "cmb_shared_libs");
+        gui_pop(&gui);
 #endif
+
+
+        gui_render(&gui);
         for (int layer_index = 0; layer_index < RENDERER_NUM_LAYERS; ++layer_index) {
             RenderCommand *commands = renderer.layer_commands[layer_index];
             for (int i = 0; i < vec_size(commands); ++i) {

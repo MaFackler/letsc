@@ -82,7 +82,7 @@ TEST(bitmap_pixels_with_alpha) {
     CHECK(b->pixels[7], 0x7FFFFFFF);
 }
 
-int main() {
+TEST_MAIN() {
     TEST_REGISTER(bitmap_header);
     TEST_REGISTER(bitmap_info);
     TEST_REGISTER(bitmap_pixels_not_aligned);

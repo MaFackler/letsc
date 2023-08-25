@@ -77,6 +77,10 @@ void renderer_push_rect(Renderer *r, float x, float y, float w, float h) {
     vec_push(r->layer_commands[cmd.layer], cmd);
 }
 
+void renderer_push_rect4f(Renderer *r, float rect[4]) {
+    renderer_push_rect(r, rect[0], rect[1], rect[2], rect[3]);
+}
+
 void renderer_push_text(Renderer *r, float x, float y, char *text, size_t n) {
     RenderCommand cmd = {
         .type = RENDER_COMMAND_TEXT,

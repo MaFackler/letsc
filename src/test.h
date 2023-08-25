@@ -14,17 +14,21 @@
 
 #define TEST(name) void test_##name()
 #define TEST_REGISTER(func) test__register("test_"#func, test_##func)
-#define TEST_RUN() test__run(__FILE__)
+#define TEST_MAIN() int main(int argc, char *argv[])
+#define TEST_RUN() test__run(__FILE__, argc, argv)
 #define SUCCESS_TO_SYMBOL(s) (s ? "==" : "!=")
 #define SUCCESS_TO_COLOR(s) (s ? TEST__COLOR_SUCCESS : TEST__COLOR_FAILURE)
 
 #define CHECK(a, b) \
-    { bool success = test__check(a, b); \
-    test__print(success, __FILE__, __LINE__); \
-    test__print_statement(success, a, b); \
-    if (!success) { \
-        test__print_code(__FILE__, __LINE__); \
-        g_failure = true; }}
+    {  \
+        bool success = test__check(a, b); \
+        if (g_verbose) test__print(success, __FILE__, __LINE__); \
+        if (g_verbose) test__print_statement(success, a, b); \
+        if (!success) { \
+            test__print_code(__FILE__, __LINE__); \
+            g_failure = true; \
+        } \
+    }
 
 typedef void (TestFunc)(void);
 typedef struct {
@@ -44,6 +48,7 @@ enum {
 static TestCase g_testcases[MAX_TESTCASES];
 static size_t g_num_testcases = 0;
 static bool g_failure = false;
+static bool g_verbose = true;
 
 // Check functions
 bool test__checki(int a, int b) {
@@ -137,9 +142,11 @@ void test__on_segfault() {
 
 
 void TEST_MESSAGE(const char *message) {
-    test__set_color(TEST__COLOR_TEST_CASE);
-    printf("%s\n", message);
-    test__set_color(TEST__COLOR_DEFAULT);
+    if (g_verbose) {
+        test__set_color(TEST__COLOR_TEST_CASE);
+        printf("%s\n", message);
+        test__set_color(TEST__COLOR_DEFAULT);
+    }
 }
 
 #define TEST_MESSAGEF(fmt, ...) test__messagef(fmt "\n", __VA_ARGS__)
@@ -151,7 +158,9 @@ void test__messagef(const char *fmt, ...) {
     va_end(args);
 }
 
-void test__run(const char *filename) {
+void test__run(const char *filename, int argc, char *argv[]) {
+
+    bool g_verbose = false;
     struct sigaction sa = {0};
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_NODEFER;
@@ -159,12 +168,14 @@ void test__run(const char *filename) {
     sigaction(SIGSEGV, &sa, NULL);
 
     test__set_color(TEST__COLOR_TITLE);
-    printf("# Run tests of file %s\n", filename);
+    if (g_verbose)
+        printf("# Run tests of file %s\n", filename);
     
     for (size_t i = 0; i < g_num_testcases; ++i) {
         TestCase *tc = &g_testcases[i];
         test__set_color(TEST__COLOR_TEST_CASE);
-        printf("=> %s\n", tc->name);
+        if (g_verbose)
+            printf("=> %s\n", tc->name);
         test__set_color(TEST__COLOR_DEFAULT);
         tc->function();
     }

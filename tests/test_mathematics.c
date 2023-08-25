@@ -140,7 +140,7 @@ TEST(m4_mul) {
     CHECK(M4_ELEMENT(res, 3, 3), 1.0f);
 }
 
-int main() {
+TEST_MAIN() {
     TEST_REGISTER(m4_create_identity);
     TEST_REGISTER(m4_create_scale);
     TEST_REGISTER(m4_create_rotation_x);

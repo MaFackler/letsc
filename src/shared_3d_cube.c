@@ -36,9 +36,30 @@ void update(SharedApi *api) {
     v3 db = {-r, r, r};
 
     static float angle = 0.0f;
-    angle += 0.5f;
-    if (angle > 360.0f) {
-        angle -= 360.0f;
+    static bool animate = false;
+    float max = 360.0f;
+    float min = 0.0f;
+    Gui *gui = api->gui;
+    const int colsize = 100;
+    GUI_PANEL(gui, "values_panel", 0, 0) {
+        GUI_ROW(gui, "animate_row") {
+            GUI_SIZE_HINT(gui, AXIS_X, SIZE_PIXELS(colsize)) {
+                gui_label(api->gui, "Animate");
+                if (gui_checkbox(api->gui, &animate, "chk_animate").active) {
+                    angle += 0.5f;
+                    if (angle > max) {
+                        angle -= max;
+                    }
+                }
+            }
+        }
+        GUI_ROW(gui, "angle_row") {
+            GUI_SIZE_HINT(gui, AXIS_X, SIZE_PIXELS(colsize)) {
+                gui_label(api->gui, "Angle");
+                if (gui_slider(api->gui, &angle, min, max, "slider_animate").active) {
+                }
+            }
+        }
     }
     m4 transform = m4_create_identity();
     m4 scale = m4_create_scale(2.0f, 2.0f, 2.0f);
@@ -72,6 +93,5 @@ void update(SharedApi *api) {
     // bottom
     framebuffer->color = 0xFFFF00FF;
     render_cube_side(framebuffer, transform, d, c, cb, db);
-
 
 }

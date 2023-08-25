@@ -19,7 +19,7 @@ TEST(test_string) {
     CHECK(&buf[0], "heyyy");
 }
 
-int main() {
+TEST_MAIN() {
     TEST_REGISTER(test_int);
     TEST_REGISTER(test_float);
     TEST_REGISTER(test_string);

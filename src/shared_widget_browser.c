@@ -36,32 +36,32 @@ void update(SharedApi *api) {
                 }
             }
         }
-        gui_pop_row(gui);
+        gui_pop(gui);
     }
 #endif
 
-    int col_size = 200;
+    int col_size = 199;
 
 #if 0
     gui_push_row(gui, "header");
     gui_label(gui, "Widget Type");
     gui_label(gui, "Widget Demo");
-    gui_pop_row(gui);
+    gui_pop(gui);
 
     gui_push_row(gui, "label");
     gui_label_hintx(gui, SIZE_PIXELS(col_size), "Label");
     gui_label_hintx(gui, SIZE_PIXELS(col_size), "MyLabel");
-    gui_pop_row(gui);
+    gui_pop(gui);
 
     gui_push_row(gui, "button");
     gui_label_hintx(gui, SIZE_PIXELS(col_size), "Button");
     gui_button_hintx(gui, SIZE_PIXELS(col_size), "MyButton");
-    gui_pop_row(gui);
+    gui_pop(gui);
 
     gui_push_row(gui, "toggle button");
     gui_label_hintx(gui, SIZE_PIXELS(col_size), "Toggle Button");
     gui_button_toggle_hintx(gui, SIZE_PIXELS(col_size), "MyToggleButton");
-    gui_pop_row(gui);
+    gui_pop(gui);
 #endif
 
     static char *items[] = {
@@ -71,33 +71,42 @@ void update(SharedApi *api) {
     };
     static size_t index = 0;
 
-    gui_push_row(gui, "combobox_row");
-    gui_label_hintx(gui, SIZE_PIXELS(col_size), "Combobox");
-    if (gui_combobox(gui, &items[0], 3, &index, "test", &index).pressed) {
-        printf("Pressed %s\n", items[index]);
+    GUI_PANEL(gui, "debug panel", 0, 0) {
+        GUI_ROW(gui, "combobox_row") {
+            gui_label(gui, "Combobox");
+            if (gui_combobox(gui, &items[0], 3, &index, "test", &index).pressed) {
+                printf("Pressed %s\n", items[index]);
+            }
+        }
+
+
+        static bool checked = false;
+        GUI_ROW(gui, "checkbox_row") {
+            gui_label(gui, "Checkbox");
+            if (gui_checkbox(gui, &checked, "My Checkbox").pressed) {
+                printf("Pressed checkbox\n");
+            }
+        }
+
+        static float value = -90.0f;
+        GUI_ROW(gui, "slider_row") {
+            gui_label(gui, "Slider");
+            if (gui_slider(gui, &value, -100, 100, "My Slider").pressed) {
+            }
+        }
     }
-    gui_pop_row(gui);
 
-    static bool checked = false;
-    gui_push_row(gui, "checkbox_row");
-    gui_label_hintx(gui, SIZE_PIXELS(col_size), "Checkbox");
-    if (gui_checkbox(gui, &checked, "My Checkbox").pressed) {
-        printf("Pressed checkbox\n");
+
+    GUI_PANEL(gui, "mypanel", 0, 400) {
+        gui_label(gui, "Panel Label");
     }
-    gui_pop_row(gui);
 
-    static float value = -90.0f;
-    gui_push_row(gui, "slider_row");
-    gui_label_hintx(gui, SIZE_PIXELS(col_size), "Checkbox");
-    if (gui_slider(gui, &value, -100, 100, "My Slider").pressed) {
-    }
-    gui_pop_row(gui);
-
-
+#if 0
     int c = 0xFF1C4E80;
     //int c = 0xfb4934;
     int cdark = lerpc(c, BLACK, 0.4);
     int clight = lerpc(c, WHITE, 0.2);
+    //printf("0x%x\n", clight);
     COLOR(c);
     int x = 100;
     int y = 100;
@@ -124,8 +133,5 @@ void update(SharedApi *api) {
     TEXT(x + 60 + 1, y + 10 + 2, text);
     COLOR(0xFFCCCCCC);
     TEXT(x + 60, y + 10, text);
-
-
-
-    gui_render(gui);
+#endif
 }

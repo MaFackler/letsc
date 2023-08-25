@@ -52,7 +52,7 @@ TEST(vec_char) {
     CHECK(s, "hello");
 }
 
-int main() {
+TEST_MAIN() {
     TEST_REGISTER(vec_int);
     TEST_REGISTER(vec_char);
     TEST_RUN();
