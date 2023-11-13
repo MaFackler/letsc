@@ -24,9 +24,17 @@
 #define GUI_ROW(g, ...) \
     gui__defer(gui_push_row(g, __VA_ARGS__), gui_pop(g))
 
+#define GUI_VBOX(g, name) \
+    gui__defer(gui_push_vbox(g, name), gui_pop(g))
+
+#define GUI_HBOX(g, name) \
+    gui__defer(gui_push_hbox(g, name), gui_pop(g))
+
 #define GUI_SIZE_HINT(g, axis, hint) \
     gui__defer(gui__set_size_hint(g, axis, hint), gui__set_size_hint(g, axis, SIZE_NULL))
 
+#define GUI_OFFSET(g, axis, value) \
+    gui__defer(gui__set_offset(g, axis, value), gui__set_offset(g, axis, value))
 
          
 
@@ -62,6 +70,7 @@ typedef enum WidgetFlag {
 
 typedef char * WidgetKey;
 
+#if 0
 #define SIZE_TEXT ((SizeHint){SIZE_HINT_TEXT, 0})
 #define SIZE_PIXELS(p) ((SizeHint){SIZE_HINT_PIXELS, p})
 #define SIZE_SUM_OF_CHILDREN ((SizeHint){SIZE_HINT_SUM_OF_CHILDREN, 0})
@@ -69,15 +78,37 @@ typedef char * WidgetKey;
 #define SIZE_NULL ((SizeHint) {SIZE_HINT_NULL, 0})
 #define SIZE_PERCENTAGE(t) ((SizeHint) {SIZE_HINT_PERCENTAGE, t})
 #define SIZE_FLEX ((SizeHint) {SIZE_HINT_FLEX, 0})
+#endif
+
+#define SIZE_NULL ((SizeHint) {SIZE_HINT_NULL, 0})
+#define LAYOUT_NONE ((SizeHint) {SIZE_HINT_NONE, 0})
+#define LAYOUT_LARGEST ((SizeHint) {SIZE_HINT_LARGEST_CHILD, 0})
+#define LAYOUT_FLOAT ((SizeHint){SIZE_HINT_FLOAT, 0})
+#define SIZE_TEXT ((SizeHint){SIZE_HINT_TEXT, 0})
+#define SIZE_PIXELS(p) ((SizeHint) {SIZE_HINT_PIXELS, p})
+#define SIZE_FLEX ((SizeHint) {SIZE_HINT_FLEX, 0})
+#define SIZE_PERCENTAGE(t) ((SizeHint) {SIZE_HINT_PERCENTAGE, t})
 
 typedef enum SizeHintFlag {
     SIZE_HINT_NULL,
-    SIZE_HINT_SUM_OF_CHILDREN,
+    // Layouts
+    SIZE_HINT_NONE,
+    SIZE_HINT_FLOAT,
+    SIZE_HINT_LARGEST_CHILD,
+    // Widgets
+    SIZE_HINT_TEXT,
+    SIZE_HINT_PIXELS,
+    SIZE_HINT_FLEX,
+    SIZE_HINT_PERCENTAGE,
+#if 0
+    SIZE_HINT_NULL,
+    SIZE_HINT_FLOAT,
     SIZE_HINT_LARGEST_CHILD,
     SIZE_HINT_TEXT,
     SIZE_HINT_PIXELS,
     SIZE_HINT_PERCENTAGE,
     SIZE_HINT_FLEX,
+#endif
 } SizeHintFlag;
 
 typedef struct {
@@ -173,6 +204,8 @@ typedef struct {
     int line_height;
     GuiStyle gui_style;
 
+    // Pipeline state variables
+    float offsets[AXIS_COUNT];
     SizeHint hints[AXIS_COUNT];
     WidgetStyle style;
 
@@ -218,6 +251,10 @@ void gui__set_size_hint(Gui *gui, Axis axis, SizeHint hint) {
     gui->hints[axis] = hint;
 }
 
+void gui__set_offset(Gui *gui, Axis axis, float value) {
+    gui->offsets[axis] = value;
+}
+
 Widget *gui__widget_create_by_name(Gui *gui, WidgetFlag flags, SizeHint hintx, SizeHint hinty, char *name) {
     char buffer[256] = {0};
     sprintf(&buffer[0], "%s", name);
@@ -234,6 +271,8 @@ Widget *gui__widget_create_by_name(Gui *gui, WidgetFlag flags, SizeHint hintx, S
     res->size_hints[AXIS_X] = hintx;
     res->size_hints[AXIS_Y] = hinty;
     res->style = gui->style;
+    res->offsets[AXIS_X] = gui->offsets[AXIS_X];
+    res->offsets[AXIS_Y] = gui->offsets[AXIS_Y];
     return res;
 }
 
@@ -254,6 +293,8 @@ Widget *gui__widget_create(Gui *gui, WidgetFlag flags, SizeHint hintx, SizeHint 
     res->size_hints[AXIS_X] = hintx;
     res->size_hints[AXIS_Y] = hinty;
     res->style = gui->style;
+    res->offsets[AXIS_X] = gui->offsets[AXIS_X];
+    res->offsets[AXIS_Y] = gui->offsets[AXIS_Y];
     return res;
 }
 
@@ -273,10 +314,8 @@ void gui_init(Gui *gui, Renderer *renderer) {
     // TODO: where do i get the text height
     gui->line_height = 30;
     gui->root = gui__widget_create_by_name(gui, 0,
-                                           SIZE_NULL,
-                                           SIZE_NULL,
-                                           // (SizeHint) {SIZE_HINT_LARGEST_CHILD},
-                                           // (SizeHint) {SIZE_HINT_SUM_OF_CHILDREN},
+                                           LAYOUT_NONE,
+                                           LAYOUT_NONE,
                                            "root");
 
 #if 0
@@ -514,7 +553,7 @@ WidgetInteraction gui_combobox(Gui *gui, char **items, size_t n, size_t *index, 
                                           //WIDGET_FLAG_BACKGROUND |
                                           //WIDGET_FLAG_BORDER,
                                           gui__get_size_hint(gui, AXIS_X, SIZE_PIXELS(200)),
-                                          gui__get_size_hint(gui, AXIS_Y, SIZE_LARGEST_CHILD),
+                                          gui__get_size_hint(gui, AXIS_Y, LAYOUT_LARGEST),
                                           fmt, args);
     combobox->style.bg = 0xFFFF0000;
     char base_name[256] = {0};
@@ -545,7 +584,7 @@ WidgetInteraction gui_combobox(Gui *gui, char **items, size_t n, size_t *index, 
         Widget* dropdown = gui__widget_create_by_name(gui,
                                                       WIDGET_FLAG_BACKGROUND,
                                                       SIZE_PIXELS(180),
-                                                      (SizeHint) {SIZE_HINT_SUM_OF_CHILDREN, 0},
+                                                      LAYOUT_FLOAT,
                                                       &buf[0]);
         dropdown->offsets[AXIS_Y] = 20;
         dropdown->layer = 1;
@@ -576,11 +615,31 @@ WidgetInteraction gui_combobox(Gui *gui, char **items, size_t n, size_t *index, 
     return res;
 }
 
+void gui_push_vbox(Gui *gui, char *name) {
+    Widget *widget = gui__widget_create_by_name(gui,
+                                                0,
+                                                LAYOUT_FLOAT,
+                                                LAYOUT_LARGEST,
+                                                name);
+    gui__widget_link_layout(gui, widget);
+    vec_push(gui->layout_stack, widget);
+}
+
+void gui_push_hbox(Gui *gui, char *name) {
+    Widget *widget = gui__widget_create_by_name(gui,
+                                                0,
+                                                LAYOUT_LARGEST,
+                                                LAYOUT_FLOAT,
+                                                name);
+    gui__widget_link_layout(gui, widget);
+    vec_push(gui->layout_stack, widget);
+}
+
 void gui_push_panel(Gui *gui, char *name, int x, int y) {
     Widget *widget = gui__widget_create_by_name(gui,
                                                 WIDGET_FLAG_BACKGROUND,
-                                                SIZE_LARGEST_CHILD,
-                                                SIZE_SUM_OF_CHILDREN,
+                                                LAYOUT_LARGEST,
+                                                LAYOUT_FLOAT,
                                                 name);
     widget->style.bg = gui->gui_style.bg_panel;
     widget->offsets[AXIS_X] = x;
@@ -593,8 +652,8 @@ void gui_push_panel(Gui *gui, char *name, int x, int y) {
 void gui_push_row(Gui *gui, char *name) {
     Widget *widget = gui__widget_create_by_name(gui,
                                                 0,
-                                                (SizeHint) {SIZE_HINT_SUM_OF_CHILDREN, gui->spacing},
-                                                (SizeHint) {SIZE_HINT_LARGEST_CHILD, 0},
+                                                LAYOUT_FLOAT,
+                                                LAYOUT_LARGEST,
                                                 name);
     gui__widget_link_layout(gui, widget);
     vec_push(gui->layout_stack, widget);
@@ -761,10 +820,14 @@ void gui__layout_func_set_percent(Gui *gui, Widget *widget) {
 void gui__layout_func_set_size_dependent_on_children(Gui *gui, Widget *widget) {
     for (int dimension = 0; dimension < AXIS_COUNT; ++dimension) {
         int rect_index = dimension + 2;
-        if (widget->size_hints[dimension].type == SIZE_HINT_SUM_OF_CHILDREN) {
+        if (widget->size_hints[dimension].type == SIZE_HINT_FLOAT) {
             int size = widget->size_hints[dimension].value;
+            int flex_children = 0;
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i];
+                if (child->size_hints[dimension].type == SIZE_HINT_FLEX) {
+                    flex_children++;
+                }
                 size += child->rect.E[rect_index] + widget->size_hints[dimension].value;
             }
             widget->rect.E[rect_index] = size;
@@ -808,13 +871,10 @@ void gui__layout_func_set_xy(Gui *gui, Widget *widget) {
     for (int dimension = 0; dimension < AXIS_COUNT; ++dimension) {
         int size_index = dimension + 2;
         int other_dimension = dimension == 0 ? 1 : 0;
-        if (widget->size_hints[dimension].type == SIZE_HINT_SUM_OF_CHILDREN) {
-            int pos = widget->rect.E[dimension];
+        if (widget->size_hints[dimension].type == SIZE_HINT_FLOAT) {
             int spacing = widget->size_hints[dimension].value;
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i]; 
-                child->rect.E[dimension] = pos + spacing;
-                pos += child->rect.E[size_index] + spacing;
                 child->rect.E[other_dimension] = widget->rect.E[other_dimension];
             }
         } else if (widget->size_hints[dimension].type == SIZE_HINT_LARGEST_CHILD) {
@@ -830,7 +890,7 @@ void gui__layout_func_set_xy(Gui *gui, Widget *widget) {
             }
         } else if (widget->size_hints[dimension].type == SIZE_HINT_PIXELS ||
                    widget->size_hints[dimension].type == SIZE_HINT_TEXT ||
-                   widget->size_hints[dimension].type == SIZE_HINT_NULL) {
+                   widget->size_hints[dimension].type == SIZE_HINT_NONE) {
             float x = widget->rect.E[dimension];
             for (int i = 0; i < vec_size(widget->children); ++i) {
                 Widget *child = widget->children[i]; 
@@ -849,11 +909,13 @@ void gui__layout_func_clean(Gui *gui, Widget *widget) {
 }
 
 void gui__do_layout(Gui *gui, int x, int y, int w, int h) {
-    gui->root->rect = (const union GuiRect){0};
+    gui->root->rect = (const union GuiRect){x, y, w, h};
     gui__do_layout_func(gui, gui->root, gui__layout_func_set_fixed_sizes, NULL);
+#if 0
     gui__do_layout_func(gui, gui->root, gui__layout_func_set_percent, NULL);
     gui__do_layout_func(gui, gui->root, NULL, gui__layout_func_set_size_dependent_on_children);
     gui__do_layout_func(gui, gui->root, NULL, gui__layout_func_flex);
+#endif
     gui__do_layout_func(gui, gui->root, gui__layout_func_set_xy, NULL);
 }
 

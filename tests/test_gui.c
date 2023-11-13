@@ -216,10 +216,118 @@ TEST(gui_panel) {
 
 }
 
+void CHECK_RECT(GuiRect rect, int x, int y, int w, int h) {
+    CHECK(rect.x, x);
+    CHECK(rect.y, y);
+    CHECK(rect.w, w);
+    CHECK(rect.h, h);
+}
+
+#define LAYOUT_SETUP() \
+    Gui gui = {0}; \
+    gui_init(&gui, NULL); \
+    gui_label(&gui, "label1"); \
+    GUI_OFFSET(&gui, AXIS_X, 10) { \
+        gui_label(&gui, "label2"); \
+    } \
+
+TEST(gui_layout_none) {
+    LAYOUT_SETUP();
+    CHECK(gui.root->size_hints[AXIS_X].type, SIZE_HINT_NONE);
+    CHECK(gui.root->size_hints[AXIS_Y].type, SIZE_HINT_NONE);
+    gui__do_layout(&gui, 0, 0, 800, 600);
+
+    CHECK(vec_size(gui.root->children), 2);
+    CHECK_RECT(gui.root->children[0]->rect, 0, 0, 58, 30);
+    //CHECK_RECT(gui.root->children[1]->rect, 10, 0, 58, 30);
+}
+
+TEST(gui_layout_sum_vbox) {
+    LAYOUT_SETUP();
+    gui.root->size_hints[AXIS_X] = LAYOUT_FLOAT;
+    gui.root->size_hints[AXIS_Y] = LAYOUT_LARGEST;
+
+    gui__do_layout(&gui, 0, 0, 800, 600);
+    CHECK(gui.root->size_hints[AXIS_X].type, SIZE_HINT_FLOAT);
+    CHECK(gui.root->size_hints[AXIS_Y].type, SIZE_HINT_LARGEST_CHILD);
+
+    CHECK(vec_size(gui.root->children), 2);
+    CHECK_RECT(gui.root->children[0]->rect, 0, 0, 58, 30);
+    CHECK_RECT(gui.root->children[1]->rect, 58, 0, 58, 30);
+}
+
+TEST(gui_layout_sum_hbox) {
+    LAYOUT_SETUP();
+    gui.root->size_hints[AXIS_X] = LAYOUT_LARGEST;
+    gui.root->size_hints[AXIS_Y] = LAYOUT_FLOAT;
+
+    gui__do_layout(&gui, 0, 0, 800, 600);
+    CHECK(gui.root->size_hints[AXIS_X].type, SIZE_HINT_LARGEST_CHILD);
+    CHECK(gui.root->size_hints[AXIS_Y].type, SIZE_HINT_FLOAT);
+
+    CHECK(vec_size(gui.root->children), 2);
+    CHECK_RECT(gui.root->children[0]->rect, 0, 0, 58, 30);
+    CHECK_RECT(gui.root->children[1]->rect, 0, 30, 58, 30);
+}
+
+TEST(gui_vbox) {
+    Gui gui = {0};
+    gui_init(&gui, 0);
+
+    GUI_VBOX(&gui, "myvbox") {
+        gui_label(&gui, "label1");
+        gui_label(&gui, "label2_");
+    }
+    gui__do_layout(&gui, 0, 0, 800, 600);
+    CHECK(vec_size(gui.root->children), 1);
+    CHECK_RECT(gui.root->children[0]->children[0]->rect, 0, 0, 58, 30);
+    CHECK_RECT(gui.root->children[0]->children[1]->rect, 58, 0, 66, 30);
+}
+
+TEST(gui_hbox) {
+    Gui gui = {0};
+    gui_init(&gui, 0);
+
+    GUI_HBOX(&gui, "myvbox") {
+        gui_label(&gui, "label1");
+        gui_label(&gui, "label2_");
+    }
+    gui__do_layout(&gui, 0, 0, 800, 600);
+    CHECK(vec_size(gui.root->children), 1);
+    CHECK_RECT(gui.root->children[0]->children[0]->rect, 0, 0, 66, 30);
+    CHECK_RECT(gui.root->children[0]->children[1]->rect, 0, 30, 66, 30);
+}
+
+TEST(gui_flex_widget) {
+    Gui gui = {0};
+    gui_init(&gui, 0);
+
+    GUI_VBOX(&gui, "myvbox") {
+        gui_label(&gui, "label1");
+        GUI_SIZE_HINT(&gui, AXIS_X, SIZE_FLEX) {
+            gui_label(&gui, "label2_");
+        }
+        gui_label(&gui, "label1");
+    }
+    gui__do_layout(&gui, 0, 0, 800, 600);
+    CHECK(vec_size(gui.root->children), 1);
+    CHECK(vec_size(gui.root->children[0]->children), 3);
+    //CHECK_RECT(gui.root->children[0]->rect, 0, 0, 800, 30);
+    CHECK_RECT(gui.root->children[0]->children[0]->rect, 0, 0, 58, 30);
+    CHECK_RECT(gui.root->children[0]->children[1]->rect, 0, 0, 0, 30);
+    CHECK_RECT(gui.root->children[0]->children[2]->rect, 0, 0, 58, 30);
+}
+
 TEST_MAIN() {
     // TODO: refactor this to layout test or something
+    // TEST_REGISTER(gui_layout_none);
+    // TEST_REGISTER(gui_layout_sum_vbox);
+    // TEST_REGISTER(gui_layout_sum_hbox);
+    // TEST_REGISTER(gui_vbox);
+    // TEST_REGISTER(gui_hbox);
+    TEST_REGISTER(gui_flex_widget);
     // TEST_REGISTER(gui);
-    TEST_REGISTER(gui_combobox);
+    // TEST_REGISTER(gui_combobox);
     // TEST_REGISTER(gui_slider);
     // TEST_REGISTER(gui_panel);
     TEST_RUN();

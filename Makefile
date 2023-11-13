@@ -6,7 +6,7 @@ TESTS_BIN=$(subst tests/, $(BUILD_DIR)/, $(basename $(TESTS)))
 SHARED_SRC=$(wildcard src/shared_*.c)
 SHARED_BIN=$(patsubst src/%.c, $(BUILD_DIR)/%.so, $(SHARED_SRC))
 
-$(BUILD_DIR)/a.out: src/main.c $(HEADERS) $(BUILD_DIR) $(SHARED_BIN)
+$(BUILD_DIR)/a.out: src/main2.c $(HEADERS) $(BUILD_DIR) $(SHARED_BIN)
 	$(CC) $< -o $@
 
 $(BUILD_DIR):
