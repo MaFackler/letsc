@@ -39,7 +39,7 @@ typedef struct {
 } PlatformWindow;
 
 Platform* platform_create() {
-    Platform *p = malloc(sizeof(Platform));
+    Platform *p = (Platform *) malloc(sizeof(Platform));
     p->display = XOpenDisplay(NULL);
     assert(p->display);
     p->screen = XDefaultScreen(p->display);
@@ -54,9 +54,9 @@ void platform_destroy(Platform *p) {
     XCloseDisplay(p->display);
 }
 
-PlatformWindow platform_window_open(Platform *p, int x, int y, int w, int h) {
+PlatformWindow platform_window_open(Platform *p, int x, uint32_t y, uint32_t w, uint32_t h) {
     PlatformWindow res = {.width=w, .height=h};
-    res.pixels = malloc(res.width * res.height * sizeof(uint32_t));
+    res.pixels = (uint32_t *) malloc(res.width * res.height * sizeof(uint32_t));
     res.window = XCreateSimpleWindow(p->display,
                                      p->root,
                                      x, y,
@@ -120,6 +120,11 @@ void platform_begin(Platform *p) {
 }
 
 void platform_end(Platform *p) {
+    for (int i = 0; i < PLATFORM_NUM_KEYS; ++i) {
+        KeyState *key = &p->input[i];
+        key->pressed = false; 
+        key->released = false; 
+    }
 }
 
 bool platform_key_down(Platform *p, uint32_t keysym) {

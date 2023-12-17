@@ -977,9 +977,9 @@ void font8x8_init(Font8x8 *font) {
 int font8x8_get_text_width(Font8x8 *font, const char *text) {
     int res = 0;
     char c = 0;
-    while (c = *text++) {
+    while ((c = *text++)) {
         assert(0 <= c && c <= 256);
-        res += font->widths[c];
+        res += font->widths[(int) c];
     }
     return res;
 }

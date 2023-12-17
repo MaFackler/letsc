@@ -120,7 +120,7 @@ void framebuffer_fill_bitmap_ex(Framebuffer *framebuffer, uint32_t *pixels, int 
                         dest_red << 16 |
                         dest_green << 8 |
                         dest_blue << 0;
-                *row++;
+                row++;
             }
         }
     }
@@ -252,7 +252,7 @@ void framebuffer_render_char(Framebuffer *framebuffer, int *x, int y, char c) {
 
 void framebuffer_render_text(Framebuffer *framebuffer, int x, int y, char *text) {
     char c = 0;
-    while (c = *text++) {
+    while ((c = *text++)) {
         framebuffer_render_char(framebuffer, &x, y, c);
     }
 }
